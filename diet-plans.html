@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Diet Plans - NutriSnap</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="description" content="Generate personalized meal plans based on goals and dietary preferences.">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="images/logo.jpg" alt="NutriSnap"
+                    style="height: 40px; margin-right: 0.5rem;">NutriSnap</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="food-identification.html" class="nav-link">Identify Food</a></li>
+                <li><a href="nutrition-info.html" class="nav-link">Nutrition Info</a></li>
+                <li><a href="bmi-calculator.html" class="nav-link">BMI Calculator</a></li>
+                <li><a href="rda-calculator.html" class="nav-link">RDA</a></li>
+                <li><a href="diet-plans.html" class="nav-link active">Diet Plans</a></li>
+                <li class="dashboard-nav-link" style="display: none;"><a href="dashboard.html" class="nav-link"><span style="font-size: 1.2rem; vertical-align: middle;">👤</span> Dashboard</a></li>
+            </ul>
+            <div class="nav-toggle"><span></span><span></span><span></span></div>
+        </div>
+    </nav>
+
+    <main style="padding-top: 100px; min-height: 100vh; padding-bottom: 2rem;">
+        <div class="container">
+            <div class="text-center mb-3">
+                <h1 class="fade-in-up">Get Your Custom Diet Plan</h1>
+                <p class="fade-in-up" style="max-width: 650px; margin: 0 auto; color: var(--text-light);">Choose your
+                    goal and preferences, then generate a simple, structured meal plan.</p>
+            </div>
+
+            <div class="card fade-in-up">
+                <h2>Preferences</h2>
+                <div class="grid grid-3">
+                    <div class="form-group">
+                        <label class="form-label">Problem Faced</label>
+                        <select id="problem" class="form-select">
+                            <option value="weight-loss">Weight Loss</option>
+                            <option value="weight-gain">Weight Gain</option>
+                            <option value="pcod-pcos">PCOD / PCOS</option>
+                            <option value="bp-cholesterol">High BP / Cholesterol</option>
+                            <option value="sugar-diabetes">Sugar / Diabetes</option>
+                            <option value="general">General Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Severity</label>
+                        <select id="severity" class="form-select">
+                            <option value="mild">Mild</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="severe">Severe</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calories Target</label>
+                        <input id="targetCalories" type="number" class="form-input" placeholder="e.g., 2000" min="1000"
+                            max="4000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dietary Preferences</label>
+                        <div class="checkbox-group">
+                            <label class="pref-label">
+                                <input type="checkbox" value="vegetarian">
+                                <span class="pref-chip">Vegetarian</span>
+                            </label>
+                            <label class="pref-label">
+                                <input type="checkbox" value="vegan">
+                                <span class="pref-chip">Vegan</span>
+                            </label>
+                            <label class="pref-label">
+                                <input type="checkbox" value="gluten-free">
+                                <span class="pref-chip">Gluten-free</span>
+                            </label>
+                            <label class="pref-label">
+                                <input type="checkbox" value="dairy-free">
+                                <span class="pref-chip">Dairy-free</span>
+                            </label>
+                            <label class="pref-label">
+                                <input type="checkbox" value="nut-free">
+                                <span class="pref-chip">Nut-free</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <button id="generateBtn" class="btn btn-primary" style="margin-top:1.5rem; width: 100%; max-width: 300px;">Generate Plan</button>
+            </div>
+
+            <div id="planSummary" class="card fade-in-up" style="margin-top:1.5rem; display:none;"></div>
+
+            <div id="planContainer" class="grid grid-2 fade-in-up" style="margin-top:1rem;"></div>
+
+            <div class="text-center" style="margin-top:2rem;">
+                <a id="downloadBtn" class="btn btn-outline" style="display:none;">Download Plan</a>
+                <button id="resetBtn" class="btn btn-secondary" style="display:none;">Start Over</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="food-identification.html" class="footer-link">Food Analysis</a>
+                <a href="bmi-calculator.html" class="footer-link">BMI Calculator</a>
+                <a href="diet-plans.html" class="footer-link">Diet Plans</a>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 2rem; margin-top: 2rem;">
+                <p>&copy; 2024 NutriSnap. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AI Chatbot UI -->
+    <div id="chatbot-fab" class="chatbot-fab glow">
+        💬
+    </div>
+
+    <div id="chatbot-window" class="chatbot-window">
+        <div class="chat-header">
+            <div class="chat-header-title">
+                <div class="chat-avatar">🤖</div>
+                NutriBot AI
+            </div>
+            <button id="chat-close" class="chat-close-btn">&times;</button>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div class="chat-bubble bot">
+                Hi! I'm NutriBot 🤖. I can answer simple questions about diets, nutrition, and healthy habits. How can I help you today?
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input-field" class="chat-input" placeholder="Type your question..." autocomplete="off">
+            <button id="chat-send-btn" class="chat-send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+    <script>
+        // Existing Diet Plan Logic
+        const problemEl = document.getElementById('problem');
+        const severityEl = document.getElementById('severity');
+        const targetCaloriesEl = document.getElementById('targetCalories');
+        const generateBtn = document.getElementById('generateBtn');
+        const planContainer = document.getElementById('planContainer');
+        const planSummary = document.getElementById('planSummary');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function updateDefaultCalories() {
+            const problem = problemEl.value;
+            const severity = severityEl.value;
+            
+            let baseCalories = 2000;
+            
+            if (problem === 'weight-loss') {
+                if (severity === 'mild') baseCalories = 1800;
+                else if (severity === 'moderate') baseCalories = 1500;
+                else if (severity === 'severe') baseCalories = 1200;
+            } else if (problem === 'weight-gain') {
+                if (severity === 'mild') baseCalories = 2300;
+                else if (severity === 'moderate') baseCalories = 2600;
+                else if (severity === 'severe') baseCalories = 3000;
+            } else if (problem === 'pcod-pcos') {
+                if (severity === 'mild') baseCalories = 1800;
+                else if (severity === 'moderate') baseCalories = 1600;
+                else if (severity === 'severe') baseCalories = 1500;
+            } else if (problem === 'bp-cholesterol') {
+                if (severity === 'mild') baseCalories = 1900;
+                else if (severity === 'moderate') baseCalories = 1800;
+                else if (severity === 'severe') baseCalories = 1600;
+            } else if (problem === 'sugar-diabetes') {
+                if (severity === 'mild') baseCalories = 1800;
+                else if (severity === 'moderate') baseCalories = 1600;
+                else if (severity === 'severe') baseCalories = 1500;
+            } else {
+                baseCalories = 2000; // general
+            }
+            
+            targetCaloriesEl.value = baseCalories;
+        }
+
+        // Initialize on load
+        updateDefaultCalories();
+
+        // Update when user changes dropdowns
+        problemEl.addEventListener('change', updateDefaultCalories);
+        severityEl.addEventListener('change', updateDefaultCalories);
+
+        generateBtn.addEventListener('click', () => {
+            const problem = problemEl.value;
+            const severity = severityEl.value;
+            const calories = parseInt(targetCaloriesEl.value, 10) || 2000;
+            const prefs = Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
+
+            const plan = generatePlan(problem, severity, calories, prefs);
+            renderPlan(plan, problem, severity, calories, prefs);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            planContainer.innerHTML = '';
+            planSummary.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+        });
+
+        function generatePlan(problem, severity, calories, prefs) {
+            // Macro ratios by problem
+            const ratios = {
+                'general': { p: 0.25, c: 0.50, f: 0.25 },
+                'weight-loss': { p: 0.35, c: 0.40, f: 0.25 },
+                'weight-gain': { p: 0.30, c: 0.50, f: 0.20 },
+                'pcod-pcos': { p: 0.30, c: 0.40, f: 0.30 },
+                'bp-cholesterol': { p: 0.25, c: 0.55, f: 0.20 },
+                'sugar-diabetes': { p: 0.30, c: 0.45, f: 0.25 }
+            }[problem] || { p: 0.25, c: 0.50, f: 0.25 };
+
+            const macros = {
+                protein: Math.round((calories * ratios.p) / 4),
+                carbs: Math.round((calories * ratios.c) / 4),
+                fat: Math.round((calories * ratios.f) / 9)
+            };
+
+            const templates = getMealTemplates(prefs);
+            const meals = ['breakfast', 'lunch', 'dinner', 'snack'].map(type => pickMeal(templates[type]));
+
+            // Calculate benefits and duration
+            const timeframes = { 'mild': 30, 'moderate': 60, 'severe': 90 };
+            const days = timeframes[severity] || 30;
+            let benefitString = "";
+
+            switch (problem) {
+                case 'weight-loss':
+                    benefitString = `Expected to lose approximately ${severity === 'mild' ? '2-3' : severity === 'moderate' ? '4-6' : '7-10'} kg safely over ${days} days.`;
+                    break;
+                case 'weight-gain':
+                    benefitString = `Expected to gain approximately ${severity === 'mild' ? '1-2' : severity === 'moderate' ? '3-4' : '5-6'} kg over ${days} days.`;
+                    break;
+                case 'pcod-pcos':
+                    benefitString = `Expect improved hormonal balance, cycle regularity, and reduced symptoms after ${days} days.`;
+                    break;
+                case 'bp-cholesterol':
+                    benefitString = `Expected stabilization of blood pressure and noticeable reduction in bad cholesterol levels within ${days} days.`;
+                    break;
+                case 'sugar-diabetes':
+                    benefitString = `Expect more stable blood glucose levels and reduced insulin spikes within ${days} days.`;
+                    break;
+                case 'general':
+                default:
+                    benefitString = `Feel more energetic and healthier overall within ${days} days of consistent balanced nutrition.`;
+                    break;
+            }
+
+            return { calories, macros, meals, benefitString, days };
+        }
+
+        function getMealTemplates(prefs) {
+            const avoid = new Set(prefs);
+            const has = v => !avoid.has(v);
+
+            return {
+                breakfast: [
+                    { type: 'breakfast', title: 'Greek Yogurt Parfait', kcal: 400, items: ['Greek yogurt', 'berries', 'granola'], icon: '🥣', class: 'breakfast' },
+                    { type: 'breakfast', title: 'Veggie Omelette', kcal: 350, items: ['eggs', 'spinach', 'tomatoes', 'cheese'], icon: '🍳', class: 'breakfast' },
+                    { type: 'breakfast', title: 'Overnight Oats', kcal: 380, items: ['oats', 'almond milk', 'banana', 'chia'], icon: '🥣', class: 'breakfast' }
+                ].filter(m => has('vegan') ? m.title !== 'Veggie Omelette' : true).filter(m => has('dairy-free') ? !m.items.includes('cheese') && m.title !== 'Greek Yogurt Parfait' : true),
+                lunch: [
+                    { type: 'lunch', title: 'Quinoa Salad Bowl', kcal: 550, items: ['quinoa', 'chickpeas', 'cucumber', 'olive oil'], icon: '🥗', class: 'lunch' },
+                    { type: 'lunch', title: 'Grilled Chicken Wrap', kcal: 600, items: ['tortilla', 'chicken', 'lettuce', 'yogurt sauce'], icon: '🌯', class: 'lunch' },
+                    { type: 'lunch', title: 'Tofu Stir-fry', kcal: 520, items: ['tofu', 'broccoli', 'rice', 'soy sauce'], icon: '🥘', class: 'lunch' }
+                ].filter(m => has('vegetarian') ? m.title !== 'Grilled Chicken Wrap' : true).filter(m => has('vegan') ? !m.items.includes('yogurt sauce') && m.title !== 'Grilled Chicken Wrap' : true).filter(m => has('gluten-free') ? !m.items.includes('tortilla') : true),
+                dinner: [
+                    { type: 'dinner', title: 'Baked Salmon + Veggies', kcal: 650, items: ['salmon', 'asparagus', 'sweet potato'], icon: '🐟', class: 'dinner' },
+                    { type: 'dinner', title: 'Lentil Curry + Rice', kcal: 620, items: ['lentils', 'tomatoes', 'rice'], icon: '🍛', class: 'dinner' },
+                    { type: 'dinner', title: 'Turkey Chili', kcal: 600, items: ['turkey', 'beans', 'tomatoes'], icon: '🍲', class: 'dinner' }
+                ].filter(m => has('vegan') ? m.title !== 'Baked Salmon + Veggies' && m.title !== 'Turkey Chili' : true),
+                snack: [
+                    { type: 'snack', title: 'Apple + Peanut Butter', kcal: 200, items: ['apple', 'peanut butter'], icon: '🍎', class: 'snack' },
+                    { type: 'snack', title: 'Trail Mix', kcal: 220, items: ['nuts', 'dried fruit'], icon: '🥜', class: 'snack' },
+                    { type: 'snack', title: 'Hummus + Carrots', kcal: 180, items: ['hummus', 'carrots'], icon: '🥕', class: 'snack' }
+                ].filter(m => has('nut-free') ? !m.items.includes('nuts') && m.title !== 'Apple + Peanut Butter' : true)
+            };
+        }
+
+        function pickMeal(list) {
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        function renderPlan(plan, problem, severity, calories, prefs) {
+            planContainer.innerHTML = '';
+
+            planSummary.style.display = 'block';
+            planSummary.className = 'card fade-in-up';
+            const problemName = problemEl.options[problemEl.selectedIndex].text;
+
+            planSummary.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.3rem;">Your Customized Plan</h3>
+                        <div style="color:var(--text-light); margin-top:0.3rem;">
+                            <strong>${problemName}</strong> <span style="margin:0 8px;">•</span> 
+                            <span style="text-transform:capitalize;">${severity}</span> <span style="margin:0 8px;">•</span> 
+                            <strong>${calories} kcal</strong>
+                        </div>
+                    </div>
+                    <div style="background:rgba(76,175,80,0.1); border:1px solid var(--primary-green); padding:10px 16px; border-radius:12px;">
+                        <span style="display:block; font-size:0.85rem; font-weight:600; color:var(--primary-green); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Expected Benefit</span>
+                        <span style="color:var(--text-dark); font-weight:500;">${plan.benefitString}</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border-light); display:flex; gap:12px; flex-wrap:wrap;">
+                    <span style="background:rgba(33, 150, 243, 0.1); color:#1976D2; padding:6px 14px; border-radius:20px; font-weight:600; font-size:0.9rem;">Protein: ${plan.macros.protein}g</span>
+                    <span style="background:rgba(255, 107, 107, 0.1); color:#D32F2F; padding:6px 14px; border-radius:20px; font-weight:600; font-size:0.9rem;">Carbs: ${plan.macros.carbs}g</span>
+                    <span style="background:rgba(76, 175, 80, 0.1); color:#2E7D32; padding:6px 14px; border-radius:20px; font-weight:600; font-size:0.9rem;">Fat: ${plan.macros.fat}g</span>
+                </div>`;
+
+            plan.meals.forEach((meal, index) => {
+                const card = document.createElement('div');
+                card.className = `meal-card ${meal.class} fade-in-up`;
+                card.style.animationDelay = `${index * 0.1}s`; // Staggered animation
+                
+                // Color mapping for meal header types
+                let bgGradient = '';
+                if(meal.class === 'breakfast') bgGradient = 'linear-gradient(135deg, #FF9800, #F57C00)';
+                else if(meal.class === 'lunch') bgGradient = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                else if(meal.class === 'dinner') bgGradient = 'linear-gradient(135deg, #4CAF50, #388E3C)';
+                else bgGradient = 'linear-gradient(135deg, #9C27B0, #7B1FA2)';
+
+                card.innerHTML = `
+                    <div class="meal-header" style="margin-bottom:1.2rem;">
+                        <div class="meal-icon" style="background: ${bgGradient}; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">${meal.icon}</div>
+                        <div>
+                            <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-light); margin-bottom:2px;">${meal.type}</div>
+                            <h3 style="margin:0; font-size:1.2rem; line-height:1.2;">${meal.title}</h3>
+                            <div style="color:var(--text-light); font-weight:600; font-size:0.9rem; margin-top:4px;">~${meal.kcal} kcal</div>
+                        </div>
+                    </div>
+                    <ul style="list-style:none; margin:0; padding:0;">
+                        ${meal.items.map(i => `<li style="padding:8px 0; border-bottom:1px solid rgba(224,224,224,0.4); display:flex; align-items:center; color:var(--text-dark);"><span style="color:var(--primary-green); margin-right:8px; font-size:1.2rem;">•</span> ${i}</li>`).join('')}
+                    </ul>
+                `;
+                planContainer.appendChild(card);
+            });
+
+            // Enable actions
+            downloadBtn.style.display = 'inline-flex';
+            resetBtn.style.display = 'inline-flex';
+
+            // Prepare downloadable JSON
+            const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            downloadBtn.href = url;
+            downloadBtn.download = 'nutrisnap-plan.json';
+            downloadBtn.textContent = 'Download Plan';
+        }
+
+        // ==========================================
+        // AI Chatbot Logic
+        // ==========================================
+        const botFab = document.getElementById('chatbot-fab');
+        const botWindow = document.getElementById('chatbot-window');
+        const botClose = document.getElementById('chat-close');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input-field');
+        const chatSend = document.getElementById('chat-send-btn');
+
+        // Toggle UI
+        botFab.addEventListener('click', () => {
+            botWindow.classList.add('active');
+            botFab.style.transform = 'scale(0)';
+            setTimeout(() => chatInput.focus(), 300);
+        });
+
+        botClose.addEventListener('click', () => {
+            botWindow.classList.remove('active');
+            botFab.style.transform = '';
+        });
+
+        // Basic AI Responses Map
+        const botKnowledge = [
+            { keywords: ['protein', 'muscle'], answer: "Protein is essential for muscle repair! Good sources include chicken, tofu, lentils, greek yogurt, and eggs. Aim for 1.6-2.2g per kg of bodyweight if building muscle." },
+            { keywords: ['water', 'hydration', 'drink'], answer: "Hydration is key! Try to drink at least 2.5-3 liters (8-10 glasses) of water daily. If you workout, you should drink even more." },
+            { keywords: ['lose weight', 'fat', 'cutting'], answer: "To lose weight safely, you need a slight caloric deficit (eating fewer calories than you burn). Focus on high fiber and high protein foods to keep you full!" },
+            { keywords: ['gain', 'bulking', 'skinny'], answer: "To gain weight, you need a caloric surplus. Try adding calorically dense foods like peanut butter, nuts, avocados, and whole milk to your diet." },
+            { keywords: ['sugar', 'sweet'], answer: "It's best to limit added sugars to under 25-36 grams per day. Natural sugars found in fruits are perfectly fine and come with great fibers!" },
+            { keywords: ['keto', 'carbs', 'low carb'], answer: "Carbs aren't the enemy! They provide energy. However, if you prefer low-carb diets like Keto, ensure you get enough healthy fats (avocados, nuts) to sustain your energy." },
+            { keywords: ['hello', 'hi', 'hey'], answer: "Hello! I'm NutriBot. Ask me any nutrition or diet-related question." }
+        ];
+
+        function getBotResponse(inputStr) {
+            const lowerInput = inputStr.toLowerCase();
+            for (let item of botKnowledge) {
+                if (item.keywords.some(kw => lowerInput.includes(kw))) {
+                    return item.answer;
+                }
+            }
+            return "That's an interesting question! While I'm still learning, a balanced diet with whole foods is almost always the right answer. Can you ask about protein, calories, or weight loss?";
+        }
+
+        function createMessageBubble(text, sender) {
+            const el = document.createElement('div');
+            el.className = `chat-bubble ${sender}`;
+            el.textContent = text;
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const el = document.createElement('div');
+            el.className = 'chat-indicator';
+            el.id = 'typing-indicator';
+            el.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function handleSend() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // 1. Show User message
+            createMessageBubble(message, 'user');
+            chatInput.value = '';
+
+            // 2. Show typing indicator
+            setTimeout(() => {
+                showTypingIndicator();
+
+                // 3. Resolve Bot Answer and Remove indicator
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    const answer = getBotResponse(message);
+                    createMessageBubble(answer, 'bot');
+                }, 1200 + Math.random() * 800); // Random delay between 1.2s and 2s
+
+            }, 400); // Small initial delay before typing starts
+        }
+
+        chatSend.addEventListener('click', handleSend);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
+
+    </script>
+</body>
+
+</html>

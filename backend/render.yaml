@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: nutrisnap-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SPOONACULAR_API_KEY
+        sync: false

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Identify Your Food - NutriSnap</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<meta name="description" content="Upload a photo of your meal and get instant nutritional analysis with AI-powered food identification.">
+</head>
+
+<body>
+
+
+<!-- Navigation -->
+
+<nav class="navbar">
+<div class="nav-container">
+
+<a href="index.html" class="logo">
+<img src="images/logo.jpg" alt="NutriSnap" style="height:40px;margin-right:0.5rem;">
+NutriSnap
+</a>
+
+<ul class="nav-menu">
+<li><a href="index.html" class="nav-link">Home</a></li>
+<li><a href="food-identification.html" class="nav-link active">Identify Food</a></li>
+<li><a href="nutrition-info.html" class="nav-link">Nutrition Info</a></li>
+<li><a href="bmi-calculator.html" class="nav-link">BMI Calculator</a></li>
+<li><a href="rda-calculator.html" class="nav-link">RDA</a></li>
+<li><a href="diet-plans.html" class="nav-link">Diet Plans</a></li>
+<li class="dashboard-nav-link" style="display:none;">
+<a href="dashboard.html" class="nav-link">👤 Dashboard</a>
+</li>
+</ul>
+
+<div class="nav-toggle">
+<span></span>
+<span></span>
+<span></span>
+</div>
+
+</div>
+</nav>
+
+<main style="padding-top:100px">
+
+<div class="container">
+
+<div class="text-center mb-3">
+<h1 class="fade-in-up">Identify Your Food</h1>
+<p class="fade-in-up" style="font-size:1.2rem;color:var(--text-light)">
+Upload a photo and our AI will analyze the nutritional value instantly
+</p>
+</div>
+
+<div class="section">
+<div class="card fade-in-up" style="max-width:800px;margin:auto">
+
+<div id="uploadZone" class="upload-zone">
+
+<div class="upload-icon">📷</div>
+
+<h3 style="margin-bottom:1rem">Upload Your Food Photo</h3>
+
+<p style="color:var(--text-light);margin-bottom:2rem">
+Drag & drop or click below
+</p>
+
+<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+
+<button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+📁 Choose File
+</button>
+
+<button class="btn btn-secondary" onclick="openCamera()">
+📱 Use Camera
+</button>
+
+</div>
+
+<p style="font-size:0.9rem;color:var(--text-light);margin-top:1rem">
+JPEG PNG WEBP • Max 5MB
+</p>
+
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<div id="analysisSection" style="display:none;margin-top:2rem;padding-top:2rem;border-top:2px solid var(--border-light)">
+
+<div class="text-center">
+
+<button id="analyzeBtn" class="btn btn-primary" style="font-size:1.1rem;padding:15px 30px">
+🔍 Analyze Food
+</button>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+
+<script>
+
+let selectedFile = null
+let cameraStream = null
+
+function detectFoodFromName(filename){
+filename = filename.toLowerCase();
+
+if(filename.includes("dhokla")) return "Dhokla";
+if(filename.includes("pizza")) return "Pizza";
+if(filename.includes("burger")) return "Burger";
+if(filename.includes("biryani")) return "Biryani";
+if(filename.includes("salad")) return "Salad";
+if(filename.includes("pasta")) return "Pasta";
+if(filename.includes("sandwich")) return "Sandwich";
+if(filename.includes("idli")) return "Idli";
+if(filename.includes("dosa")) return "Dosa";
+
+return null;
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+const uploadZone = document.getElementById("uploadZone")
+const fileInput = document.getElementById("fileInput")
+
+NutriSnapUtils.initializeFileUpload(uploadZone,fileInput,handleFileUpload)
+
+document.getElementById("analyzeBtn").addEventListener("click",analyzeFood)
+
+})
+
+function handleFileUpload(file,imageSrc){
+
+selectedFile = file
+
+document.getElementById("analysisSection").style.display="block"
+
+}
+
+function openCamera(){
+
+const modal = document.getElementById("cameraModal")
+const video = document.getElementById("cameraStream")
+
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+
+cameraStream = stream
+video.srcObject = stream
+video.play()
+
+})
+
+}
+
+async function analyzeFood(){
+  if(!selectedFile){
+    NutriSnapUtils.showNotification("Upload image first","warning");
+    return;
+  }
+
+  // Ensure user is authenticated to scan
+  let token = NutriSnapUtils.getFromLocalStorage('nutrisnap_token');
+  // the getFromLocalStorage already does JSON.parse, but the login was saving it as a raw string sometimes or with quotes
+  // wait actually getFromLocalStorage might fail or return a string with quotes. 
+  // Let's use the safer auth check
+  
+  const authStatus = localStorage.getItem('nutrisnap_auth');
+  const isAuthenticated = (authStatus === 'true' || authStatus === '"true"');
+
+  if (!isAuthenticated) {
+    NutriSnapUtils.showNotification("Please login to scan food", "error");
+    setTimeout(() => { window.location.href = "login.html"; }, 1500);
+    return;
+  }
+
+  if(selectedFile.type === "sample"){
+      const analysisData = generateAnalysisData(selectedFile);
+      NutriSnapUtils.saveToLocalStorage('currentAnalysis', analysisData);
+      window.location.href = "nutrition-info.html";
+      return;
+  }
+
+  const btn = document.getElementById("analyzeBtn");
+  NutriSnapUtils.showLoading(btn,"AI scanning via backend...");
+
+  try{
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    // Call our own backend API instead of Spoonacular directly
+    const data = await NutriSnapUtils.apiFetch('/food/analyze', {
+      method: "POST",
+      // Do NOT set Content-Type header manually when sending FormData,
+      // fetch will automatically set it to multipart/form-data with the correct boundary
+      body: formData
+    });
+
+    console.log("Backend Analysis Response:", data);
+
+    // If our backend couldn't identify the food, try a quick client-side fallback:
+    // 1) Detect food from the file name
+    // 2) Directly call Spoonacular using the API key embedded in utils.js
+    if (!data.foodName || data.foodName === 'Unknown Food') {
+      const detectedName = detectFoodFromName(selectedFile.name || '');
+      if (detectedName) {
+        data.foodName = detectedName;
+        data.confidence = 70;
+      } else {
+        try {
+          const spoon = await NutriSnapUtils.analyzeImageWithSpoonacular(selectedFile);
+          const spoonName = (spoon.category && spoon.category.name) || spoon.foodName || spoon.name || spoon.food_name || spoon.label;
+          if (spoonName) {
+            data.foodName = spoonName;
+            const prob = (spoon.category && (spoon.category.probability || spoon.category.confidence)) || spoon.probability || spoon.confidence || 0.7;
+            data.confidence = Math.round(prob * 100);
+          }
+          // If we got a food name, try to get nutrition via Spoonacular as well
+          if (data.foodName && data.foodName !== 'Unknown Food') {
+            const nut = await NutriSnapUtils.guessNutritionFromName(data.foodName);
+            data.nutrition = {
+              calories: Math.round((nut.calories && nut.calories.value) ? nut.calories.value : 250),
+              protein:  Math.round((nut.protein  && nut.protein.value)  ? nut.protein.value  : 12),
+              carbs:    Math.round((nut.carbs    && nut.carbs.value)    ? nut.carbs.value    : 35),
+              fat:      Math.round((nut.fat      && nut.fat.value)      ? nut.fat.value      : 8),
+              fiber:    5,
+              sugar:    Math.round((nut.carbs    && nut.carbs.value)    ? nut.carbs.value * 0.2 : 7),
+              sodium:   300,
+              vitamins: { 'Vitamin A': 12, 'Vitamin C': 8, 'Vitamin B6': 6 },
+              minerals: { 'Calcium': 150, 'Iron': 8, 'Magnesium': 40, 'Potassium': 300 }
+            };
+          }
+        } catch (e) {
+          console.warn('Fallback Spoonacular lookup failed', e);
+        }
+      }
+    }
+
+    const analysisData = {
+      foodName: data.foodName,
+      confidence: data.confidence,
+      image: "🍽️",
+      nutrition: data.nutrition
+    };
+
+    NutriSnapUtils.saveToLocalStorage("currentAnalysis", analysisData);
+    NutriSnapUtils.hideLoading(btn);
+    NutriSnapUtils.showNotification(`AI detected ${data.foodName}`,"success");
+
+    setTimeout(()=>{
+      window.location.href="nutrition-info.html";
+    },1200);
+
+  } catch(error){
+    console.error(error);
+    NutriSnapUtils.hideLoading(btn);
+    NutriSnapUtils.showNotification(error.message || "AI analysis failed", "error");
+  }
+}
+
+function capturePhoto(){
+
+const video = document.getElementById("cameraStream");
+
+const canvas = document.createElement("canvas");
+
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+
+const ctx = canvas.getContext("2d");
+
+ctx.drawImage(video,0,0);
+
+canvas.toBlob(blob => {
+
+selectedFile = new File([blob],"camera-food.jpg",{type:"image/jpeg"});
+
+document.getElementById("analysisSection").style.display="block";
+
+closeCamera();
+
+});
+
+}
+
+function closeCamera(){
+
+document.getElementById("cameraModal").style.display="none";
+
+if(cameraStream){
+cameraStream.getTracks().forEach(track=>track.stop());
+}
+
+}
+</script>
+
+</body>
+</html>

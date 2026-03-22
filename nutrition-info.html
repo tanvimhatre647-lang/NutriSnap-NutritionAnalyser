@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutritional Breakdown - NutriSnap</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="description" content="View detailed nutritional breakdown of your analyzed meal with macros, micros, and visual charts.">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="images/logo.jpg" alt="NutriSnap" style="height: 40px; margin-right: 0.5rem;">NutriSnap</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="food-identification.html" class="nav-link">Identify Food</a></li>
+                <li><a href="nutrition-info.html" class="nav-link active">Nutrition Info</a></li>
+                <li><a href="bmi-calculator.html" class="nav-link">BMI Calculator</a></li>
+                <li><a href="rda-calculator.html" class="nav-link">RDA</a></li>
+                <li><a href="diet-plans.html" class="nav-link">Diet Plans</a></li>
+                <li class="dashboard-nav-link" style="display: none;"><a href="dashboard.html" class="nav-link"><span style="font-size: 1.2rem; vertical-align: middle;">👤</span> Dashboard</a></li>
+            </ul>
+            <div class="nav-toggle">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main style="padding-top: 100px;">
+        <div class="container">
+            <div id="headerCard" class="card fade-in-up" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div id="foodEmoji" style="font-size: 4rem;">🍽️</div>
+                <div>
+                    <h1 id="foodName" style="margin: 0;">Analyzed Food</h1>
+                    <p id="confidenceText" style="margin: 0; color: var(--text-light);">Confidence: --%</p>
+                </div>
+                <div style="margin-left: auto; display: flex; gap: .5rem;">
+                    <a class="btn btn-outline" href="food-identification.html">Analyze Another</a>
+                    <a class="btn btn-primary" href="index.html">Back to Home</a>
+                </div>
+            </div>
+
+            <!-- Macros and micros -->
+            <section class="section" style="padding-top: 2rem;">
+                <div class="grid grid-2">
+                    <!-- Macros -->
+                    <div class="card fade-in-up">
+                        <h2 style="margin-bottom: 1rem;">Macronutrients</h2>
+                        <div id="macrosContainer"></div>
+                        <div class="nutrition-card" style="margin-top: 1rem;">
+                            <div style="display:flex; justify-content: space-between; color: var(--text-light);">
+                                <span>Per serving</span>
+                                <span id="macroSummary">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Micros -->
+                    <div class="card fade-in-up">
+    
+<h2 style="margin-bottom: 1rem;">Micronutrients</h2>
+
+<div id="microsContainer"></div>
+
+<div class="nutrition-card" style="margin-top: 1rem;">
+    <div style="display:flex; justify-content: space-between; color: var(--text-light);">
+        <span>Micronutrient summary</span>
+        <span id="microSummary">--</span>
+    </div>
+</div>
+
+</div>
+
+            <!-- Chart summary -->
+            <section class="section" style="padding-top: 0;">
+                <div class="card fade-in-up">
+                    <h2>Macro Distribution</h2>
+                    <div id="macroChart" style="margin-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;"></div>
+                    <p style="font-size:.9rem; color: var(--text-light); margin-top:1rem;">Proportions shown as percentage of total calories.</p>
+                </div>
+            </section>
+
+            <!-- Tips -->
+            <section class="section" style="padding-top: 0;">
+                <div class="card fade-in-up">
+                    <h2>Healthy Tips</h2>
+                    <ul style="color: var(--text-light); line-height: 1.8;">
+                        <li>Balance carbs, protein, and fats to meet your daily goals.</li>
+                        <li>Include fiber-rich foods to improve satiety and digestion.</li>
+                        <li>Watch sodium and added sugars for heart health.</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="food-identification.html" class="footer-link">Food Analysis</a>
+                <a href="bmi-calculator.html" class="footer-link">BMI Calculator</a>
+                <a href="diet-plans.html" class="footer-link">Diet Plans</a>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 2rem; margin-top: 2rem;">
+                <p>&copy; 2024 NutriSnap. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+    <script>
+        // Render nutrition page from localStorage or fallback sample
+        const data = NutriSnapUtils.getFromLocalStorage('currentAnalysis') || {
+            foodName: 'Sample Meal', image: '🍽️', confidence: 90,
+            nutrition: { calories: 450, protein: 20, carbs: 50, fat: 15, fiber: 5, sugar: 8, sodium: 600,
+                vitamins: { 'Vitamin C': 20, 'Vitamin A': 15 }, minerals: { 'Calcium': 150, 'Iron': 10 } }
+        };
+
+        // Header
+        document.getElementById('foodEmoji').textContent = data.image || '🍽️';
+        document.getElementById('foodName').textContent = data.foodName || 'Analyzed Food';
+        document.getElementById('confidenceText').textContent = `Confidence: ${data.confidence || '--'}%`;
+
+        // Macros
+        const macrosEl = document.getElementById('macrosContainer');
+        macrosEl.innerHTML = '';
+        NutriSnapUtils.createProgressBar(macrosEl, 'Calories', data.nutrition.calories, 800, '#FF9800');
+        NutriSnapUtils.createProgressBar(macrosEl, 'Carbs', data.nutrition.carbs, 300, '#FF6B6B');
+        NutriSnapUtils.createProgressBar(macrosEl, 'Protein', data.nutrition.protein, 200, '#2196F3');
+        NutriSnapUtils.createProgressBar(macrosEl, 'Fat', data.nutrition.fat, 130, '#4CAF50');
+        if (typeof data.nutrition.fiber === 'number') {
+            NutriSnapUtils.createProgressBar(macrosEl, 'Fiber', data.nutrition.fiber, 50, '#9C27B0');
+        }
+
+        const macroSummary = `${data.nutrition.calories} kcal, ${data.nutrition.carbs}g carbs, ${data.nutrition.protein}g protein, ${data.nutrition.fat}g fat`;
+        document.getElementById('macroSummary').textContent = macroSummary;
+
+        // Micro nutrients
+        const microsEl = document.getElementById('microsContainer');
+        const micros = { ...(data.nutrition.vitamins || {}), ...(data.nutrition.minerals || {}) };
+        microsEl.innerHTML = Object.keys(micros).length ? '' : '<p style="color: var(--text-light);">Micronutrient details not available.</p>';
+        Object.entries(micros).forEach(([name, value]) => {
+            const card = document.createElement('div');
+            card.className = 'nutrition-card';
+            card.innerHTML = `<div style="display:flex; justify-content: space-between; align-items:center;">
+                <strong style="color: var(--text-dark);">${name}</strong>
+                <span style="color: var(--text-light);">${value}${name.toLowerCase().includes('vitamin') || name.endsWith('%') ? '%' : (['Calcium','Iron','Potassium','Magnesium','Selenium','Zinc','Phosphorus','Manganese'].includes(name) ? ' mg' : '')}</span>
+            </div>`;
+            microsEl.appendChild(card);
+        });
+
+        // Macro distribution simple bars
+        const cal = data.nutrition.calories || 0;
+        const p = (data.nutrition.protein || 0) * 4;
+        const c = (data.nutrition.carbs || 0) * 4;
+        const f = (data.nutrition.fat || 0) * 9;
+        const total = Math.max(p + c + f, 1);
+        const macroChart = document.getElementById('macroChart');
+        macroChart.innerHTML = [
+            {label:'Protein', val:p, color:'#2196F3'},
+            {label:'Carbs', val:c, color:'#FF6B6B'},
+            {label:'Fat', val:f, color:'#4CAF50'}
+        ].map(m => {
+            const pct = (m.val / total * 100).toFixed(1);
+            return `<div class="nutrition-card" style="text-align:center;">
+                <div style="height:8px; background: var(--border-light); border-radius:4px; overflow:hidden; margin-bottom:.5rem;">
+                    <div style="width:${pct}%; background:${m.color}; height:100%"></div>
+                </div>
+                <strong>${m.label}</strong>
+                <div style="color: var(--text-light);">${pct}% of calories</div>
+            </div>`
+        }).join('');
+    </script>
+</body>
+</html>

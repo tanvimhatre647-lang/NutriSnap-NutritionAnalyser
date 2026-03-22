@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator - NutriSnap</title>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="description" content="Interactive BMI calculator with unit toggles, category gauge, and helpful tips.">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="images/logo.jpg" alt="NutriSnap" style="height: 40px; margin-right: 0.5rem;">NutriSnap</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="food-identification.html" class="nav-link">Identify Food</a></li>
+                <li><a href="nutrition-info.html" class="nav-link">Nutrition Info</a></li>
+                <li><a href="bmi-calculator.html" class="nav-link active">BMI Calculator</a></li>
+                <li><a href="rda-calculator.html" class="nav-link">RDA</a></li>
+                <li><a href="diet-plans.html" class="nav-link">Diet Plans</a></li>
+                <li class="dashboard-nav-link" style="display: none;"><a href="dashboard.html" class="nav-link"><span style="font-size: 1.2rem; vertical-align: middle;">👤</span> Dashboard</a></li>
+            </ul>
+            <div class="nav-toggle"><span></span><span></span><span></span></div>
+        </div>
+    </nav>
+
+    <main style="padding-top: 100px;">
+        <div class="container">
+            <div class="text-center mb-3">
+                <h1 class="fade-in-up">Calculate Your BMI</h1>
+                <p class="fade-in-up" style="max-width: 600px; margin: 0 auto; color: var(--text-light);">Enter your height and weight to see your Body Mass Index.</p>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card fade-in-up">
+                    <h2>Inputs</h2>
+                    <div class="form-group">
+                        <label class="form-label">Weight</label>
+                        <div style="display:flex; gap:.5rem;">
+                            <input id="weight" type="number" class="form-input" placeholder="e.g., 70" min="1">
+                            <select id="weightUnit" class="form-select" style="max-width: 120px;">
+                                <option value="kg">kg</option>
+                                <option value="lbs">lbs</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Height</label>
+                        <div style="display:flex; gap:.5rem;">
+                            <input id="height" type="number" class="form-input" placeholder="e.g., 175" min="1">
+                            <select id="heightUnit" class="form-select" style="max-width: 120px;">
+                                <option value="cm">cm</option>
+                                <option value="ft">feet</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="calcBtn" class="btn btn-primary">Calculate</button>
+                </div>
+
+                <div class="card fade-in-up">
+                    <h2>Result</h2>
+                    <div class="bmi-gauge">
+                        <div class="bmi-value" id="bmiValue">--</div>
+                    </div>
+                    <div id="bmiCategory" class="text-center" style="font-size: 1.2rem; font-weight: 600;">Enter values to calculate</div>
+                    <p class="text-center" style="color: var(--text-light);">A BMI between 18.5 and 24.9 is considered healthy.</p>
+                </div>
+            </div>
+
+            <div class="card fade-in-up" style="margin-top:2rem;">
+                <h2>BMI Categories</h2>
+                <div class="grid grid-4" style="margin-top:1rem;">
+                    <div class="nutrition-card"><strong>Underweight</strong><div style="color: var(--text-light);">&lt; 18.5</div></div>
+                    <div class="nutrition-card"><strong>Normal weight</strong><div style="color: var(--text-light);">18.5 - 24.9</div></div>
+                    <div class="nutrition-card"><strong>Overweight</strong><div style="color: var(--text-light);">25 - 29.9</div></div>
+                    <div class="nutrition-card"><strong>Obese</strong><div style="color: var(--text-light);">≥ 30</div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="food-identification.html" class="footer-link">Food Analysis</a>
+                <a href="bmi-calculator.html" class="footer-link">BMI Calculator</a>
+                <a href="diet-plans.html" class="footer-link">Diet Plans</a>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 2rem; margin-top: 2rem;">
+                <p>&copy; 2024 NutriSnap. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+    <script>
+        const weightEl = document.getElementById('weight');
+        const heightEl = document.getElementById('height');
+        const weightUnitEl = document.getElementById('weightUnit');
+        const heightUnitEl = document.getElementById('heightUnit');
+        const calcBtn = document.getElementById('calcBtn');
+        const bmiValueEl = document.getElementById('bmiValue');
+        const bmiCategoryEl = document.getElementById('bmiCategory');
+
+        calcBtn.addEventListener('click', () => {
+            const weight = parseFloat(weightEl.value);
+            const height = parseFloat(heightEl.value);
+
+            if (!weight || weight <= 0 || !height || height <= 0) {
+                NutriSnapUtils.showNotification('Please enter positive numbers for height and weight', 'error');
+                return;
+            }
+
+            const bmi = NutriSnapUtils.calculateBMI(weight, height, weightUnitEl.value, heightUnitEl.value);
+            const { category, color } = NutriSnapUtils.getBMICategory(bmi);
+
+            bmiValueEl.textContent = bmi.toFixed(1);
+            bmiCategoryEl.textContent = category;
+            bmiCategoryEl.style.color = 'var(--text-dark)';
+
+            // Optional: outline color hint
+            document.querySelector('.bmi-gauge').style.boxShadow = `0 0 0 6px ${getComputedStyle(document.documentElement).getPropertyValue(color) || color}22`;
+        });
+    </script>
+</body>
+</html>

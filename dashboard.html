@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - NutriSnap</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .dashboard-container {
+            padding-top: 100px;
+            min-height: 100vh;
+            padding-bottom: 3rem;
+            background: var(--light-green); /* Optional slightly different background */
+        }
+
+        /* History List Styles */
+        .history-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-top: 2rem;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .history-details {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .history-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--primary-green);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .history-name {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .history-macros {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .macro-stat span {
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-blue));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .data-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary-green);
+        }
+        
+        .data-card.blue { border-left-color: var(--secondary-blue); }
+        .data-card.orange { border-left-color: var(--warning-orange); }
+
+        .data-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .progress-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .mini-timeline {
+            display: flex;
+            gap: 10px;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .day-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            background: var(--border-light);
+            color: var(--text-light);
+        }
+
+        .day-box.success {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .day-box.missed {
+            background: var(--error-red);
+            color: white;
+        }
+        
+        #logoutBtn {
+            background: transparent;
+            color: var(--error-red);
+            border: 2px solid var(--error-red);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        #logoutBtn:hover {
+            background: var(--error-red);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo"><img src="images/logo.jpg" alt="NutriSnap" style="height: 40px; margin-right: 0.5rem;">NutriSnap</a>
+            
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="food-identification.html" class="nav-link">Identify Food</a></li>
+                <li><a href="nutrition-info.html" class="nav-link">Nutrition Info</a></li>
+                <li><a href="bmi-calculator.html" class="nav-link">BMI Calculator</a></li>
+                <li><a href="rda-calculator.html" class="nav-link">RDA</a></li>
+                <li><a href="diet-plans.html" class="nav-link">Diet Plans</a></li>
+                <li class="dashboard-nav-link" style="display: block;"><a href="dashboard.html" class="nav-link active"><span style="font-size: 1.2rem; vertical-align: middle;">👤</span> Dashboard</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container dashboard-container">
+        
+        <!-- Profile Header -->
+        <div class="profile-header fade-in-up">
+            <div class="profile-avatar">
+                <span id="userInitial">U</span>
+            </div>
+            <div style="flex-grow: 1;">
+                <h1 style="margin: 0; font-size: 2rem;">Welcome, <span id="userEmailDisplay">User</span>!</h1>
+                <p style="color: var(--text-light); margin: 0.5rem 0 0 0;">Here is an overview of your health profile and progress.</p>
+            </div>
+            <div>
+                <button id="logoutBtn">Log Out</button>
+            </div>
+        </div>
+
+        <!-- Health Data Grid -->
+        <h2 class="fade-in-up" style="animation-delay: 0.1s; margin-bottom: 1rem;">Your Profile Data</h2>
+        <div class="data-grid fade-in-up" style="animation-delay: 0.2s;">
+            <div class="data-card">
+                <div class="data-label">Current Goal</div>
+                <div class="data-value" id="dashGoal" style="text-transform: capitalize;">--</div>
+            </div>
+            <div class="data-card blue">
+                <div class="data-label">Physical Stats</div>
+                <div class="data-value"><span id="dashWeight">--</span> kg / <span id="dashHeight">--</span> cm</div>
+            </div>
+            <div class="data-card orange">
+                <div class="data-label">Daily Target</div>
+                <div class="data-value"><span id="dashIntake">--</span> kcal</div>
+                <div style="font-size: 0.85rem; color: var(--text-light); margin-top: 4px;">Target Burn: <span id="dashBurn">--</span> kcal</div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section fade-in-up" style="animation-delay: 0.3s;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">Diet Tracking Overview</h2>
+                <a href="journey.html" class="btn btn-outline" style="padding: 6px 16px; font-size: 0.9rem;">Log Today / Full Details</a>
+            </div>
+            <p style="color: var(--text-light); margin-top: 0.5rem;">Your recent consistency at a glance (Last 14 days)</p>
+            
+            <div class="mini-timeline" id="recentTimeline">
+                <!-- Javascript will populate boxes here -->
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">
+                <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 12px; height: 12px; border-radius: 3px; background: var(--success-green);"></div> Followed</div>
+                <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 12px; height: 12px; border-radius: 3px; background: var(--error-red);"></div> Missed</div>
+                <div style="display: flex; align-items: center; gap: 5px;"><div style="width: 12px; height: 12px; border-radius: 3px; background: var(--border-light);"></div> No Data</div>
+            </div>
+        </div>
+
+        <!-- Scan History Section -->
+        <div class="history-section fade-in-up" style="animation-delay: 0.4s;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">Recent Food Scans</h2>
+            </div>
+            <p style="color: var(--text-light); margin-top: 0.5rem;">Your AI analyzed meals</p>
+            
+            <div class="history-list" id="historyList">
+                <div style="text-align: center; color: var(--text-light); padding: 2rem;">Loading scan history...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="food-identification.html" class="footer-link">Food Analysis</a>
+                <a href="bmi-calculator.html" class="footer-link">BMI Calculator</a>
+                <a href="diet-plans.html" class="footer-link">Diet Plans</a>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 2rem; margin-top: 2rem;">
+                <p>&copy; 2024 NutriSnap. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Authentication Check
+            const authStatus = localStorage.getItem('nutrisnap_auth');
+            if (!authStatus || authStatus === 'guest') {
+                window.location.href = 'welcome.html';
+                return; // Stop execution
+            }
+
+            // 2. Load User Email
+            const userEmail = localStorage.getItem('nutrisnap_user_email') || 'User';
+            document.getElementById('userEmailDisplay').textContent = userEmail.split('@')[0];
+            document.getElementById('userInitial').textContent = userEmail.charAt(0).toUpperCase();
+
+            // 3. Load Profile Data
+            const profileStr = localStorage.getItem('nutrisnap_profile');
+            if (profileStr) {
+                const profile = JSON.parse(profileStr);
+                
+                // Format the goal string to be more readable
+                let readableGoal = profile.goal;
+                if(readableGoal === 'weight-loss') readableGoal = 'Weight Loss';
+                if(readableGoal === 'weight-gain') readableGoal = 'Weight Gain';
+                if(readableGoal === 'pcod') readableGoal = 'PCOD Management';
+                if(readableGoal === 'diabetes') readableGoal = 'Blood Sugar Control';
+                if(readableGoal === 'cholesterol') readableGoal = 'Cholesterol Control';
+                if(readableGoal === 'maintenance') readableGoal = 'Maintenance';
+
+                document.getElementById('dashGoal').textContent = readableGoal;
+                document.getElementById('dashWeight').textContent = profile.weight;
+                document.getElementById('dashHeight').textContent = profile.height;
+                document.getElementById('dashIntake').textContent = profile.targetIntake;
+                document.getElementById('dashBurn').textContent = profile.targetBurn;
+            } else {
+                // Not onboarded yet
+                window.location.href = 'onboarding.html';
+            }
+
+            // 4. Load Journey Data for timeline
+            const journeyStr = localStorage.getItem('nutrisnap_journey');
+            const timelineContainer = document.getElementById('recentTimeline');
+            
+            if (journeyStr) {
+                const journey = JSON.parse(journeyStr);
+                
+                // Get the last 14 logged entries (or fewer if not enough)
+                const recentJourney = journey.slice(-14);
+                
+                if (recentJourney.length > 0) {
+                    recentJourney.forEach(log => {
+                        const box = document.createElement('div');
+                        box.className = `day-box ${log.success ? 'success' : 'missed'}`;
+                        
+                        // Parse date to just get the day number
+                        const dateObj = new Date(log.date);
+                        box.textContent = dateObj.getDate();
+                        box.title = new Date(log.date).toLocaleDateString();
+                        
+                        timelineContainer.appendChild(box);
+                    });
+                } else {
+                    timelineContainer.innerHTML = '<p style="color:var(--text-light);">No days logged yet. Start tracking on the "My Journey" page!</p>';
+                }
+            } else {
+                 timelineContainer.innerHTML = '<p style="color:var(--text-light);">No data found. Start tracking on the "My Journey" page!</p>';
+            }
+
+            // 5. Fetch and Display Scan History
+            loadScanHistory();
+
+            // 6. Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('nutrisnap_auth');
+                localStorage.removeItem('nutrisnap_user_email');
+                localStorage.removeItem('nutrisnap_profile');
+                localStorage.removeItem('nutrisnap_journey');
+                localStorage.removeItem('nutrisnap_onboarding_completed');
+                localStorage.removeItem('nutrisnap_token'); // Make sure TO REMOVE token
+                window.location.href = 'welcome.html';
+            });
+        });
+
+        async function loadScanHistory() {
+            const historyList = document.getElementById('historyList');
+            try {
+                const scans = await NutriSnapUtils.apiFetch('/food/history');
+                
+                if (!scans || scans.length === 0) {
+                    historyList.innerHTML = '<div style="text-align: center; color: var(--text-light); padding: 2rem;">No food scans yet. Start identifying food to see your history!</div>';
+                    return;
+                }
+
+                historyList.innerHTML = '';
+                
+                // Show up to 5 most recent scans on the dashboard
+                const displayScans = scans.slice(0, 5);
+
+                displayScans.forEach(scan => {
+                    const date = new Date(scan.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-details">
+                            <div class="history-icon">${getFoodEmoji(scan.foodName)}</div>
+                            <div>
+                                <div class="history-name">${scan.foodName}</div>
+                                <div class="history-date">${date} • ${scan.confidence}% Match</div>
+                            </div>
+                        </div>
+                        <div class="history-macros">
+                            <div class="macro-stat"><span>${scan.nutrition.calories}</span> kcal</div>
+                            <div class="macro-stat"><span>${scan.nutrition.protein}</span>g P</div>
+                            <div class="macro-stat"><span>${scan.nutrition.carbs}</span>g C</div>
+                        </div>
+                    `;
+                    historyList.appendChild(item);
+                });
+
+            } catch (error) {
+                historyList.innerHTML = `<div style="text-align: center; color: var(--error-red); padding: 2rem;">Failed to load scan history: ${error.message}</div>`;
+            }
+        }
+
+        function getFoodEmoji(foodName) {
+            const lower = foodName.toLowerCase();
+            if (lower.includes('pizza')) return '🍕';
+            if (lower.includes('burger')) return '🍔';
+            if (lower.includes('salad')) return '🥗';
+            if (lower.includes('apple')) return '🍎';
+            if (lower.includes('sandwich')) return '🥪';
+            if (lower.includes('pasta')) return '🍝';
+            if (lower.includes('chicken') || lower.includes('meat')) return '🍗';
+            if (lower.includes('fish')) return '🐟';
+            if (lower.includes('rice')) return '🍚';
+            if (lower.includes('cake') || lower.includes('sweet')) return '🍰';
+            return '🍽️';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - NutriSnap</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at top right,rgba(232,245,232,0.8),transparent 60%);padding:2rem}
+.auth-card{background:white;border-radius:24px;padding:3rem;box-shadow:0 20px 50px rgba(0,0,0,0.08);width:100%;max-width:450px;border:1px solid rgba(224,224,224,0.5)}
+.back-link{display:inline-block;color:var(--text-light);text-decoration:none;margin-bottom:2rem;font-weight:500}
+.back-link:hover{color:var(--primary-green)}
+.auth-title{font-size:2rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-dark)}
+.auth-subtitle{color:var(--text-light);margin-bottom:2rem}
+</style>
+</head>
+<body>
+<div class="auth-container">
+  <div class="auth-card">
+    <a href="welcome.html" class="back-link">Back</a>
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-subtitle">Sign in to track your diet journey.</p>
+    <div class="form-group">
+      <label class="form-label" for="email">Email Address</label>
+      <input type="email" id="email" class="form-input" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" id="password" class="form-input" placeholder="Password">
+    </div>
+    <button id="submitBtn" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign In</button>
+    <p style="text-align:center;margin-top:2rem;font-size:0.9rem">
+      No account?
+      <a href="register.html" style="color:var(--primary-green);font-weight:600;text-decoration:none">Sign up here</a>
+    </p>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script>
+document.getElementById('submitBtn').addEventListener('click', async function() {
+  var email = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var btn = document.getElementById('submitBtn');
+
+  if (!email || !password) {
+    NutriSnapUtils.showNotification('Please fill in all fields', 'error');
+    return;
+  }
+
+  NutriSnapUtils.showLoading(btn, 'Signing In...');
+  try {
+    var res = await NutriSnapUtils.apiFetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    // Store token and auth as plain strings
+    localStorage.setItem('nutrisnap_token', res.token);
+    localStorage.setItem('nutrisnap_auth', 'true');
+    localStorage.setItem('nutrisnap_user_email', res.email);
+
+    // Restore profile from backend if onboarding was done previously
+    if (res.weight && res.height && res.goal) {
+      var w = res.weight, h = res.height, g = res.goal, a = res.activityLevel;
+      var bmr = (10 * w) + (6.25 * h) - (5 * 30) + 5;
+      var mult = { sedentary:1.2, 'lightly-active':1.375, 'moderately-active':1.55, 'very-active':1.725 };
+      var tdee = bmr * (mult[a] || 1.2);
+      var ti = tdee, tb = 300;
+      if (g === 'weight-loss') { ti = tdee - 500; tb = 450; }
+      else if (g === 'weight-gain') { ti = tdee + 500; tb = 250; }
+      if (ti < 1200) ti = 1200;
+      NutriSnapUtils.saveToLocalStorage('nutrisnap_profile', { weight:w, height:h, goal:g, activityLevel:a, targetIntake:Math.round(ti), targetBurn:Math.round(tb), startDate:new Date().toISOString() });
+      localStorage.setItem('nutrisnap_onboarding_completed', 'true');
+    }
+
+    NutriSnapUtils.showNotification('Welcome back!', 'success');
+    setTimeout(function() {
+      var done = localStorage.getItem('nutrisnap_onboarding_completed');
+      window.location.href = (done === 'true') ? 'index.html' : 'onboarding.html';
+    }, 1000);
+  } catch (err) {
+    NutriSnapUtils.hideLoading(btn);
+    NutriSnapUtils.showNotification(err.message || 'Login failed', 'error');
+  }
+});
+</script>
+</body>
+</html>
