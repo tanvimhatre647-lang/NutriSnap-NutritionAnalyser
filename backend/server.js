@@ -20,6 +20,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/food', require('./routes/foodRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 app.get('/', (req, res) => res.send('NutriSnap API is running'));
 

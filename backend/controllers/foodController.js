@@ -12,68 +12,70 @@ const analyzeFood = async (req, res) => {
     let confidence = 80;
     let nutritionData = {};
 
-    // Try Spoonacular image analysis
+    // Base64 encode the image
+    const base64Image = req.file.buffer.toString('base64');
+    const imageMime = req.file.mimetype;
+
+    let nutrition = {};
+
     try {
-      const formData = new FormData();
-      formData.append('file', req.file.buffer, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype
-      });
-      const analyzeResponse = await axios.post(
-        'https://api.spoonacular.com/food/images/analyze?apiKey=' + process.env.SPOONACULAR_API_KEY,
-        formData,
-        { headers: formData.getHeaders() }
+      const openRouterResponse = await axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          model: 'openai/gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Analyze this image. If it contains food, identify the main dish, guess its standard nutritional values, and set "isFood" to true. If it does not contain food, set "isFood" to false. Respond strictly with a JSON object in this format: { "foodName": "Name", "confidence": 85, "isFood": true, "nutrition": { "calories": 250, "protein": 12, "carbs": 35, "fat": 8, "fiber": 5, "sugar": 7, "sodium": 300, "vitamins": { "Vitamin A": 12, "Vitamin C": 8, "Vitamin B6": 6 }, "minerals": { "Calcium": 150, "Iron": 8, "Magnesium": 40, "Potassium": 300 } } }'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${imageMime};base64,${base64Image}`
+                  }
+                }
+              ]
+            }
+          ],
+          response_format: { type: 'json_object' }
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
+          }
+        }
       );
-      const analyzeData = analyzeResponse.data;
-      // Spoonacular can return different properties depending on the image.
-      // Prefer the category name, but fall back to other known fields.
-      foodName = (analyzeData.category && analyzeData.category.name) ||
-                 analyzeData.foodName ||
-                 analyzeData.name ||
-                 analyzeData.food_name ||
-                 analyzeData.label ||
-                 'Unknown Food';
 
-      const probability = (analyzeData.category && (analyzeData.category.probability || analyzeData.category.confidence)) ||
-                          analyzeData.probability ||
-                          analyzeData.confidence ||
-                          0.8;
-      confidence = Math.round(probability * 100);
-    } catch (apiErr) {
-      console.error('Spoonacular analyze error:', apiErr.message);
-      // Fallback: guess from filename
-      const fn = req.file.originalname.toLowerCase();
-      if (fn.includes('apple'))   foodName = 'Apple';
-      else if (fn.includes('pizza'))   foodName = 'Pizza';
-      else if (fn.includes('salad'))   foodName = 'Salad';
-      else if (fn.includes('burger'))  foodName = 'Burger';
-      else if (fn.includes('biryani')) foodName = 'Biryani';
-      else if (fn.includes('rice'))    foodName = 'Rice';
-    }
+      const responseContent = openRouterResponse.data.choices[0].message.content;
+      const parsedData = JSON.parse(responseContent);
 
-    // Try Spoonacular nutrition guess
-    if (foodName !== 'Unknown Food') {
-      try {
-        const nutResponse = await axios.get(
-          'https://api.spoonacular.com/recipes/guessNutrition?title=' + encodeURIComponent(foodName) + '&apiKey=' + process.env.SPOONACULAR_API_KEY
-        );
-        nutritionData = nutResponse.data;
-      } catch (nutErr) {
-        console.error('Spoonacular nutrition error:', nutErr.message);
+      if (!parsedData.isFood || parsedData.confidence < 40 || parsedData.foodName === 'Unknown Food') {
+        return res.status(400).json({ message: 'please upload a valid food image' });
       }
-    }
 
-    const nutrition = {
-      calories: Math.round((nutritionData.calories && nutritionData.calories.value) ? nutritionData.calories.value : 250),
-      protein:  Math.round((nutritionData.protein  && nutritionData.protein.value)  ? nutritionData.protein.value  : 12),
-      carbs:    Math.round((nutritionData.carbs    && nutritionData.carbs.value)    ? nutritionData.carbs.value    : 35),
-      fat:      Math.round((nutritionData.fat      && nutritionData.fat.value)      ? nutritionData.fat.value      : 8),
-      fiber:    5,
-      sugar:    Math.round((nutritionData.carbs    && nutritionData.carbs.value)    ? nutritionData.carbs.value * 0.2 : 7),
-      sodium:   300,
-      vitamins: { 'Vitamin A': 12, 'Vitamin C': 8, 'Vitamin B6': 6 },
-      minerals: { 'Calcium': 150, 'Iron': 8, 'Magnesium': 40, 'Potassium': 300 }
-    };
+      foodName = parsedData.foodName;
+      confidence = parsedData.confidence;
+      
+      // Merge with default nutrition to ensure no missing keys
+      nutrition = {
+        calories: parsedData.nutrition?.calories || 250,
+        protein:  parsedData.nutrition?.protein  || 12,
+        carbs:    parsedData.nutrition?.carbs    || 35,
+        fat:      parsedData.nutrition?.fat      || 8,
+        fiber:    parsedData.nutrition?.fiber    || 5,
+        sugar:    parsedData.nutrition?.sugar    || 7,
+        sodium:   parsedData.nutrition?.sodium   || 300,
+        vitamins: parsedData.nutrition?.vitamins || { 'Vitamin A': 12, 'Vitamin C': 8, 'Vitamin B6': 6 },
+        minerals: parsedData.nutrition?.minerals || { 'Calcium': 150, 'Iron': 8, 'Magnesium': 40, 'Potassium': 300 }
+      };
+
+    } catch (apiErr) {
+      console.error('OpenRouter analyze error:', apiErr.response ? apiErr.response.data : apiErr.message);
+      return res.status(500).json({ message: 'Server error during AI vision analysis' });
+    }
 
     const scanRecord = await ScanHistory.create({
       user: req.user.id,
