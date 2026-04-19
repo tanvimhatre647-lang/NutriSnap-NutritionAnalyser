@@ -19,40 +19,38 @@ const analyzeFood = async (req, res) => {
     let nutrition = {};
 
     try {
-      const openRouterResponse = await axios.post(
-        'https://openrouter.ai/api/v1/chat/completions',
+      const prompt = 'Analyze this image. If it contains food, identify the main dish, guess its standard nutritional values, and set "isFood" to true. If it does not contain food, set "isFood" to false. Respond strictly with a JSON object in this format: { "foodName": "Name", "confidence": 85, "isFood": true, "nutrition": { "calories": 250, "protein": 12, "carbs": 35, "fat": 8, "fiber": 5, "sugar": 7, "sodium": 300, "vitamins": { "Vitamin A": 12, "Vitamin C": 8, "Vitamin B6": 6 }, "minerals": { "Calcium": 150, "Iron": 8, "Magnesium": 40, "Potassium": 300 } } }';
+
+      const geminiResponse = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
-          model: 'google/gemma-3-27b-it:free',
-          messages: [
+          contents: [
             {
-              role: 'user',
-              content: [
+              parts: [
+                { text: prompt },
                 {
-                  type: 'text',
-                  text: 'Analyze this image. If it contains food, identify the main dish, guess its standard nutritional values, and set "isFood" to true. If it does not contain food, set "isFood" to false. Respond strictly with a JSON object in this format: { "foodName": "Name", "confidence": 85, "isFood": true, "nutrition": { "calories": 250, "protein": 12, "carbs": 35, "fat": 8, "fiber": 5, "sugar": 7, "sodium": 300, "vitamins": { "Vitamin A": 12, "Vitamin C": 8, "Vitamin B6": 6 }, "minerals": { "Calcium": 150, "Iron": 8, "Magnesium": 40, "Potassium": 300 } } }'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:${imageMime};base64,${base64Image}`
+                  inlineData: {
+                    mimeType: imageMime,
+                    data: base64Image
                   }
                 }
               ]
             }
-          ],
-          response_format: { type: 'json_object' },
-          max_tokens: 1000
+          ]
         },
         {
           headers: {
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
+            'Content-Type': 'application/json'
           }
         }
       );
 
-      let responseContent = openRouterResponse.data.choices[0].message.content;
-      // Strip markdown block formatting if present
-      responseContent = responseContent.replace(/```json/g, '').replace(/```/g, '').trim();
+      let responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
+      // Extract JSON using regex
+      const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+          responseContent = jsonMatch[0];
+      }
       const parsedData = JSON.parse(responseContent);
 
       if (!parsedData.isFood || parsedData.confidence < 40 || parsedData.foodName === 'Unknown Food') {
@@ -76,7 +74,7 @@ const analyzeFood = async (req, res) => {
       };
 
     } catch (apiErr) {
-      console.error('OpenRouter analyze error:', apiErr.response ? (apiErr.response.data || apiErr.response.statusText) : apiErr.message);
+      console.error('Gemini analyze error:', apiErr.response ? (apiErr.response.data || apiErr.response.statusText) : apiErr.message);
       console.log('Initiating HuggingFace Fallback for food identification...');
       
       try {
@@ -120,8 +118,10 @@ const analyzeFood = async (req, res) => {
         }
 
       } catch (hfErr) {
-        console.error('HuggingFace fallback error:', hfErr.response ? (hfErr.response.data || hfErr.response.statusText) : hfErr.message);
-        return res.status(500).json({ message: 'Server error during AI vision analysis on both APIs' });
+        const orError = apiErr.response ? JSON.stringify(apiErr.response.data) : apiErr.message;
+        const hfErrorMsg = hfErr.response ? JSON.stringify(hfErr.response.data) : hfErr.message;
+        console.error('HuggingFace fallback error:', hfErrorMsg);
+        return res.status(500).json({ message: `Analysis failed. Gemini Error: ${orError}. HF Error: ${hfErrorMsg}` });
       }
     }
 
