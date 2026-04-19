@@ -50,7 +50,9 @@ const analyzeFood = async (req, res) => {
         }
       );
 
-      const responseContent = openRouterResponse.data.choices[0].message.content;
+      let responseContent = openRouterResponse.data.choices[0].message.content;
+      // Strip markdown block formatting if present
+      responseContent = responseContent.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsedData = JSON.parse(responseContent);
 
       if (!parsedData.isFood || parsedData.confidence < 40 || parsedData.foodName === 'Unknown Food') {
