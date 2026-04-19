@@ -10,7 +10,7 @@ const chatWithBot = async (req, res) => {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'openai/gpt-3.5-turbo', // You can choose an appropriate model supported by OpenRouter
+        model: 'google/gemma-3-27b-it:free', // You can choose an appropriate model supported by OpenRouter
         messages: [
           {
             role: 'system',

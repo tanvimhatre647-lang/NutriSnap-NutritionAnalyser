@@ -22,7 +22,7 @@ const analyzeFood = async (req, res) => {
       const openRouterResponse = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
         {
-          model: 'openai/gpt-4o-mini',
+          model: 'google/gemma-3-27b-it:free',
           messages: [
             {
               role: 'user',
