@@ -309,6 +309,7 @@ document.getElementById("cameraModal").style.display="none";
 if(cameraStream){
 cameraStream.getTracks().forEach(track=>track.stop());
 }
+}
 
 // Helper function to compress images before uploading
 function compressImage(file, maxWidth) {
