@@ -40,7 +40,8 @@ const analyzeFood = async (req, res) => {
               ]
             }
           ],
-          response_format: { type: 'json_object' }
+          response_format: { type: 'json_object' },
+          max_tokens: 1000
         },
         {
           headers: {
@@ -73,8 +74,53 @@ const analyzeFood = async (req, res) => {
       };
 
     } catch (apiErr) {
-      console.error('OpenRouter analyze error:', apiErr.response ? apiErr.response.data : apiErr.message);
-      return res.status(500).json({ message: 'Server error during AI vision analysis' });
+      console.error('OpenRouter analyze error:', apiErr.response ? (apiErr.response.data || apiErr.response.statusText) : apiErr.message);
+      console.log('Initiating HuggingFace Fallback for food identification...');
+      
+      try {
+        const hfResponse = await axios.post(
+          'https://api-inference.huggingface.co/models/nateraw/food',
+          req.file.buffer,
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+              'Content-Type': req.file.mimetype
+            }
+          }
+        );
+
+        const hfData = hfResponse.data;
+        if (Array.isArray(hfData) && hfData.length > 0) {
+          // Some HF classification models return array of arrays: [[{label: 'a', score: 0.9}]] or just [{label: 'a', score: 0.9}]
+          // nateraw/food returns an array of objects
+          const topResult = Array.isArray(hfData[0]) ? hfData[0][0] : hfData[0];
+          foodName = topResult.label || 'Unknown Food';
+          confidence = Math.round((topResult.score || 0) * 100);
+          
+          if (confidence < 40 || foodName === 'Unknown Food') {
+             return res.status(400).json({ message: 'please upload a valid food image' });
+          }
+
+          // Use default base nutrition
+          nutrition = {
+            calories: 250,
+            protein: 12,
+            carbs: 35,
+            fat: 8,
+            fiber: 5,
+            sugar: 7,
+            sodium: 300,
+            vitamins: { 'Vitamin A': 12, 'Vitamin C': 8, 'Vitamin B6': 6 },
+            minerals: { 'Calcium': 150, 'Iron': 8, 'Magnesium': 40, 'Potassium': 300 }
+          };
+        } else {
+          throw new Error('Invalid prediction format from HuggingFace');
+        }
+
+      } catch (hfErr) {
+        console.error('HuggingFace fallback error:', hfErr.response ? (hfErr.response.data || hfErr.response.statusText) : hfErr.message);
+        return res.status(500).json({ message: 'Server error during AI vision analysis on both APIs' });
+      }
     }
 
     const scanRecord = await ScanHistory.create({
