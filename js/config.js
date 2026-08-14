@@ -1,7 +1,6 @@
 // ============================================================
-//  NutriSnap Cloud Configuration
-//  After deploying backend to Render, paste your URL below.
-//  Example: 'https://nutrisnap-api.onrender.com'
-//  Leave as empty string '' to use localhost:5000 (local dev)
+//  NutriSnap Configuration
+//  Set to 'http://localhost:5000' for local dev, or your production backend URL
 // ============================================================
-window.NUTRISNAP_API_URL = 'https://nutrisnap-nutritionanalyser.onrender.com';
+window.NUTRISNAP_API_URL = 'http://localhost:5000';
+

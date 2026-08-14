@@ -5,40 +5,9 @@
 // - Falls back to localhost for local development
 const API_BASE_URL = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api';
 
-// Spoonacular (Food API) helper
-// NOTE: Storing an API key in client-side JS is insecure; this is for quick prototyping only.
-const SPOONACULAR_API_KEY = 'e8ece78e99be4d9eb876249cab52ead2';
-const SPOONACULAR_BASE_URL = 'https://api.spoonacular.com';
+// API Base URL (defaults to localhost:5000 for local dev if window.NUTRISNAP_API_URL is not set)
+const API_BASE_URL = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api';
 
-function spoonacularFetch(path, params) {
-  params = params || {};
-  params.apiKey = SPOONACULAR_API_KEY;
-  var query = new URLSearchParams(params).toString();
-  return fetch(SPOONACULAR_BASE_URL + path + '?' + query).then(function(res) {
-    if (!res.ok) {
-      return res.text().then(function(text) {
-        throw new Error('Spoonacular API error: ' + res.status + ' ' + (text || res.statusText));
-      });
-    }
-    return res.json();
-  });
-}
-
-async function analyzeImageWithSpoonacular(file) {
-  var formData = new FormData();
-  formData.append('file', file);
-  var url = SPOONACULAR_BASE_URL + '/food/images/analyze?apiKey=' + encodeURIComponent(SPOONACULAR_API_KEY);
-  var res = await fetch(url, { method: 'POST', body: formData });
-  if (!res.ok) {
-    var errText = await res.text();
-    throw new Error('Spoonacular analyze error: ' + res.status + ' ' + (errText || res.statusText));
-  }
-  return res.json();
-}
-
-function guessNutritionFromName(foodName) {
-  return spoonacularFetch('/recipes/guessNutrition', { title: foodName });
-}
 
 // ── API fetch helper ──────────────────────────────────────────────────────────
 async function apiFetch(endpoint, options) {
@@ -139,7 +108,12 @@ function getFromLocalStorage(key) {
 function initializeFileUpload(uploadZone, fileInput, callback) {
   if (!uploadZone || !fileInput) return;
 
-  uploadZone.addEventListener('click', function() { fileInput.click(); });
+  uploadZone.addEventListener('click', function(e) {
+    // Only trigger fileInput click if the click wasn't already on a button or the fileInput itself
+    if (e.target.tagName !== 'BUTTON' && e.target !== fileInput && !e.target.closest('button')) {
+      fileInput.click();
+    }
+  });
 
   uploadZone.addEventListener('dragover', function(e) {
     e.preventDefault();
@@ -151,30 +125,40 @@ function initializeFileUpload(uploadZone, fileInput, callback) {
   uploadZone.addEventListener('drop', function(e) {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0], uploadZone, callback);
+    if (e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0], uploadZone, callback);
+    }
   });
   fileInput.addEventListener('change', function(e) {
-    if (e.target.files.length > 0) handleFileSelect(e.target.files[0], uploadZone, callback);
+    if (e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0], uploadZone, callback);
+      e.target.value = ''; // reset so choosing the same file triggers change event again
+    }
   });
 }
 
 function handleFileSelect(file, uploadZone, callback) {
-  var validTypes = ['image/jpeg','image/jpg','image/png','image/webp'];
-  if (validTypes.indexOf(file.type) === -1) {
+  if (!file.type.startsWith('image/')) {
     showNotification('Please select a valid image (JPEG, PNG, WebP)', 'error');
     return;
   }
-  if (file.size > 5 * 1024 * 1024) {
-    showNotification('File size must be under 5MB', 'error');
+  if (file.size > 10 * 1024 * 1024) {
+    showNotification('File size must be under 10MB', 'error');
     return;
   }
   var reader = new FileReader();
   reader.onload = function(e) {
-    uploadZone.innerHTML = '<img src="' + e.target.result + '" alt="Preview" style="max-width:200px;max-height:200px;border-radius:8px;margin-bottom:1rem"><p style="color:var(--text-dark);font-weight:600">' + file.name + '</p><p style="color:var(--text-light);font-size:0.9rem">Click to change image</p>';
+    var preview = uploadZone.querySelector('#imagePreview');
+    if (!preview) {
+      uploadZone.innerHTML = '<div style="text-align:center"><img id="imagePreview" src="' + e.target.result + '" alt="Preview" style="max-width:260px;max-height:260px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:1rem"><p style="color:var(--text-dark);font-weight:600;font-size:1.1rem">' + file.name + '</p><p style="color:var(--text-light);font-size:0.9rem;margin-top:0.5rem">Click or drop to select a different image</p></div>';
+    } else {
+      preview.src = e.target.result;
+    }
     if (callback) callback(file, e.target.result);
   };
   reader.readAsDataURL(file);
 }
+
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 function initializeNavigation() {
@@ -204,7 +188,10 @@ function initializeNavigation() {
 // ── Animation ─────────────────────────────────────────────────────────────────
 function animateOnScroll() {
   var elements = document.querySelectorAll('.fade-in-up');
-  if (!('IntersectionObserver' in window)) return;
+  if (!('IntersectionObserver' in window)) {
+    elements.forEach(function(el) { el.style.opacity = '1'; el.style.transform = 'none'; });
+    return;
+  }
   var observer = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
       if (entry.isIntersecting) {
@@ -212,14 +199,31 @@ function animateOnScroll() {
         entry.target.style.transform = 'translateY(0)';
       }
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.01 });
+
   elements.forEach(function(el) {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(30px)';
-    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(el);
+    // Check if element is already visible in initial viewport
+    var rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    } else {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(el);
+    }
   });
+
+  // Fallback safety timeout to ensure elements are never permanently hidden
+  setTimeout(function() {
+    elements.forEach(function(el) {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    });
+  }, 500);
 }
+
 
 // ── BMI ───────────────────────────────────────────────────────────────────────
 function calculateBMI(weight, height) {
@@ -285,11 +289,6 @@ window.NutriSnapUtils = {
   getBMICategory: getBMICategory,
   calculateRDA: calculateRDA,
   createProgressBar: createProgressBar,
-  // Spoonacular helpers
-  spoonacularFetch: spoonacularFetch,
-  analyzeImageWithSpoonacular: analyzeImageWithSpoonacular,
-  guessNutritionFromName: guessNutritionFromName,
-  API_BASE_URL: API_BASE_URL,
-  SPOONACULAR_API_KEY: SPOONACULAR_API_KEY,
-  SPOONACULAR_BASE_URL: SPOONACULAR_BASE_URL
+  API_BASE_URL: API_BASE_URL
 };
+
