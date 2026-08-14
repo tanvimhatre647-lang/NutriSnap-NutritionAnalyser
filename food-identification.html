@@ -294,7 +294,7 @@ function displayNutritionalReview(analysisData, imageSrc) {
         <span style="background:#e65100; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">NON-FOOD ITEM DETECTED</span>
         <h2 style="margin:0.8rem 0 0.5rem 0; font-size:1.8rem; color:#d84315; font-weight:800">No Food Detected in Image</h2>
         <p style="color:#bf360c; font-size:1.1rem; max-width:600px; margin:0 auto 1.5rem auto; font-weight:600">
-          Our Gemini AI analyzed your photo ("${analysisData.foodName}") and determined it is not a food item. Please upload a clear photo of your dish, meal, or food ingredients!
+          Our AI analyzed your photo ("${analysisData.foodName}") and determined it is not a food item. Please upload a clear photo of your dish, meal, or food ingredients!
         </p>
         <button class="btn btn-primary" onclick="location.reload()" style="padding:14px 28px; font-weight:700; border-radius:30px">
           📷 Upload Food Photo
@@ -311,11 +311,12 @@ function displayNutritionalReview(analysisData, imageSrc) {
         <div style="display:flex; align-items:center; gap:1.2rem">
           ${imageSrc ? `<img src="${imageSrc}" style="width:80px; height:80px; border-radius:16px; object-fit:cover; box-shadow:0 6px 15px rgba(0,0,0,0.12)">` : '<div style="font-size:3.5rem">🍽️</div>'}
           <div>
-            <span style="background:#4CAF50; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">✓ GEMINI 2.5 AI VERIFIED</span>
+            <span style="background:#4CAF50; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">✓ AI MATCH VERIFIED</span>
             <h2 style="margin:0.4rem 0 0 0; font-size:2rem; color:var(--text-dark); font-weight:800">${analysisData.foodName}</h2>
             <p style="margin:0.2rem 0 0 0; color:var(--text-light); font-weight:600">AI Confidence: ${analysisData.confidence}%</p>
           </div>
         </div>
+
         <div>
           <a href="nutrition-info.html" class="btn btn-primary" style="padding:12px 24px; font-weight:700; font-size:1rem; border-radius:30px; box-shadow:0 4px 15px rgba(33,150,243,0.3)">📊 Full Macro Chart</a>
         </div>
