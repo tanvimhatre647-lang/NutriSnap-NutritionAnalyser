@@ -109,8 +109,7 @@ function initializeFileUpload(uploadZone, fileInput, callback) {
   if (!uploadZone || !fileInput) return;
 
   uploadZone.addEventListener('click', function(e) {
-    // Only trigger fileInput click if the click wasn't already on a button or the fileInput itself
-    if (e.target.tagName !== 'BUTTON' && e.target !== fileInput && !e.target.closest('button')) {
+    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'LABEL' && e.target !== fileInput && !e.target.closest('button') && !e.target.closest('label')) {
       fileInput.click();
     }
   });
@@ -126,38 +125,45 @@ function initializeFileUpload(uploadZone, fileInput, callback) {
     e.preventDefault();
     uploadZone.classList.remove('dragover');
     if (e.dataTransfer.files.length > 0) {
-      handleFileSelect(e.dataTransfer.files[0], uploadZone, callback);
+      handleFileSelect(e.dataTransfer.files[0], uploadZone, fileInput, callback);
     }
   });
   fileInput.addEventListener('change', function(e) {
-    if (e.target.files.length > 0) {
-      handleFileSelect(e.target.files[0], uploadZone, callback);
-      e.target.value = ''; // reset so choosing the same file triggers change event again
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileSelect(e.target.files[0], uploadZone, fileInput, callback);
     }
   });
 }
 
-function handleFileSelect(file, uploadZone, callback) {
-  if (!file.type.startsWith('image/')) {
+function handleFileSelect(file, uploadZone, fileInput, callback) {
+  if (!file || !file.type || !file.type.startsWith('image/')) {
     showNotification('Please select a valid image (JPEG, PNG, WebP)', 'error');
+    if (fileInput) fileInput.value = '';
     return;
   }
   if (file.size > 10 * 1024 * 1024) {
     showNotification('File size must be under 10MB', 'error');
+    if (fileInput) fileInput.value = '';
     return;
   }
   var reader = new FileReader();
   reader.onload = function(e) {
+    if (fileInput) fileInput.value = ''; // Safely reset file input AFTER reader completes
     var preview = uploadZone.querySelector('#imagePreview');
     if (!preview) {
-      uploadZone.innerHTML = '<div style="text-align:center"><img id="imagePreview" src="' + e.target.result + '" alt="Preview" style="max-width:260px;max-height:260px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:1rem"><p style="color:var(--text-dark);font-weight:600;font-size:1.1rem">' + file.name + '</p><p style="color:var(--text-light);font-size:0.9rem;margin-top:0.5rem">Click or drop to select a different image</p></div>';
+      uploadZone.innerHTML = '<div style="text-align:center"><img id="imagePreview" src="' + e.target.result + '" alt="Preview" style="max-width:260px;max-height:260px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:1rem"><p style="color:var(--text-dark);font-weight:600;font-size:1.1rem">' + file.name + '</p></div>';
     } else {
       preview.src = e.target.result;
     }
     if (callback) callback(file, e.target.result);
   };
+  reader.onerror = function() {
+    if (fileInput) fileInput.value = '';
+    showNotification('Could not read image file', 'error');
+  };
   reader.readAsDataURL(file);
 }
+
 
 
 // ── Navigation ────────────────────────────────────────────────────────────────
