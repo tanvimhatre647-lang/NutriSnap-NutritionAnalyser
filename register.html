@@ -28,55 +28,53 @@
       <label class="form-label" for="password">Password</label>
       <input type="password" id="password" class="form-input" placeholder="Password">
     </div>
-    <button id="submitBtn" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign Up</button>
+    <button id="submitBtn" type="button" onclick="handleRegister()" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign Up</button>
     <p style="text-align:center;margin-top:2rem;font-size:0.9rem">
       Already have an account?
       <a href="login.html" style="color:var(--primary-green);font-weight:600;text-decoration:none">Sign in here</a>
     </p>
   </div>
 </div>
+
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
+
 <script>
-document.getElementById('submitBtn').addEventListener('click', async function() {
-  var email = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-  var btn = document.getElementById('submitBtn');
+function handleRegister() {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const btn = document.getElementById('submitBtn');
+
+  const email = (emailInput ? emailInput.value : '').trim();
+  const password = (passwordInput ? passwordInput.value : '');
 
   if (!email || !password) {
-    NutriSnapUtils.showNotification('Please fill in all fields', 'error');
+    if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Please fill in all fields', 'error');
+    else alert('Please fill in both Email and Password');
     return;
   }
   if (password.length < 4) {
-    NutriSnapUtils.showNotification('Password must be at least 4 characters', 'error');
+    if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Password must be at least 4 characters', 'error');
+    else alert('Password must be at least 4 characters');
     return;
   }
 
-  NutriSnapUtils.showLoading(btn, 'Creating Account...');
-  var token = 'token_' + Date.now();
+  btn.innerText = 'Creating Account...';
+  btn.disabled = true;
 
   try {
-    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 2000) : null;
-    var data = await NutriSnapUtils.apiFetch('/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: password }),
-      signal: controller ? controller.signal : undefined
-    });
-    if (timeoutId) clearTimeout(timeoutId);
-    if (data && data.token) token = data.token;
-  } catch (err) {
-    console.warn('API registration fetch skipped/failed, completing account creation locally:', err.message);
-  }
+    localStorage.setItem('nutrisnap_token', 'token_' + Date.now());
+    localStorage.setItem('nutrisnap_auth', 'true');
+    localStorage.setItem('nutrisnap_user_email', email);
+  } catch(e) {}
 
-  localStorage.setItem('nutrisnap_token', token);
-  localStorage.setItem('nutrisnap_auth', 'true');
-  localStorage.setItem('nutrisnap_user_email', email);
-  NutriSnapUtils.showNotification('Account created! Redirecting...', 'success');
-  setTimeout(function() { window.location.href = 'onboarding.html'; }, 800);
-});
+  if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Account created! Redirecting...', 'success');
+
+  setTimeout(function() {
+    window.location.href = 'onboarding.html';
+  }, 400);
+}
 </script>
 
 </body>
-</html>
+</html>

@@ -28,76 +28,49 @@
       <label class="form-label" for="password">Password</label>
       <input type="password" id="password" class="form-input" placeholder="Password">
     </div>
-    <button id="submitBtn" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign In</button>
+    <button id="submitBtn" type="button" onclick="handleLogin()" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign In</button>
     <p style="text-align:center;margin-top:2rem;font-size:0.9rem">
       No account?
       <a href="register.html" style="color:var(--primary-green);font-weight:600;text-decoration:none">Sign up here</a>
     </p>
   </div>
 </div>
+
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
+
 <script>
-document.getElementById('submitBtn').addEventListener('click', async function() {
-  var email = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-  var btn = document.getElementById('submitBtn');
+function handleLogin() {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const btn = document.getElementById('submitBtn');
+
+  const email = (emailInput ? emailInput.value : '').trim();
+  const password = (passwordInput ? passwordInput.value : '');
 
   if (!email || !password) {
-    NutriSnapUtils.showNotification('Please fill in all fields', 'error');
+    if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Please fill in all fields', 'error');
+    else alert('Please fill in both Email and Password');
     return;
   }
 
-  NutriSnapUtils.showLoading(btn, 'Signing In...');
-  var token = 'token_' + Date.now();
-  var userEmail = email;
-  var userProfile = null;
+  btn.innerText = 'Signing In...';
+  btn.disabled = true;
 
   try {
-    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 2000) : null;
-    var res = await NutriSnapUtils.apiFetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: password }),
-      signal: controller ? controller.signal : undefined
-    });
-    if (timeoutId) clearTimeout(timeoutId);
-    if (res) {
-      if (res.token) token = res.token;
-      if (res.email) userEmail = res.email;
-      if (res.weight && res.height && res.goal) {
-        userProfile = res;
-      }
-    }
-  } catch (err) {
-    console.warn('API login fetch skipped/failed, authenticating locally:', err.message);
-  }
+    localStorage.setItem('nutrisnap_token', 'token_' + Date.now());
+    localStorage.setItem('nutrisnap_auth', 'true');
+    localStorage.setItem('nutrisnap_user_email', email);
+  } catch(e) {}
 
-  localStorage.setItem('nutrisnap_token', token);
-  localStorage.setItem('nutrisnap_auth', 'true');
-  localStorage.setItem('nutrisnap_user_email', userEmail);
+  if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Welcome back!', 'success');
 
-  if (userProfile) {
-    var w = userProfile.weight, h = userProfile.height, g = userProfile.goal, a = userProfile.activityLevel;
-    var bmr = (10 * w) + (6.25 * h) - (5 * 30) + 5;
-    var mult = { sedentary:1.2, 'lightly-active':1.375, 'moderately-active':1.55, 'very-active':1.725 };
-    var tdee = bmr * (mult[a] || 1.2);
-    var ti = tdee, tb = 300;
-    if (g === 'weight-loss') { ti = tdee - 500; tb = 450; }
-    else if (g === 'weight-gain') { ti = tdee + 500; tb = 250; }
-    if (ti < 1200) ti = 1200;
-    NutriSnapUtils.saveToLocalStorage('nutrisnap_profile', { weight:w, height:h, goal:g, activityLevel:a, targetIntake:Math.round(ti), targetBurn:Math.round(tb), startDate:new Date().toISOString() });
-    localStorage.setItem('nutrisnap_onboarding_completed', 'true');
-  }
-
-  NutriSnapUtils.showNotification('Welcome back!', 'success');
   setTimeout(function() {
     var done = localStorage.getItem('nutrisnap_onboarding_completed');
     window.location.href = (done === 'true') ? 'index.html' : 'onboarding.html';
-  }, 800);
-});
+  }, 400);
+}
 </script>
 
 </body>
-</html>
+</html>
