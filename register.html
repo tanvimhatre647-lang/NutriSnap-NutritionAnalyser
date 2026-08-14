@@ -26,10 +26,11 @@
     </div>
     <div class="form-group">
       <label class="form-label" for="password">Password</label>
-      <input type="password" id="password" class="form-input" placeholder="Password">
+      <input type="password" id="password" class="form-input" placeholder="Password" onkeypress="if(event.key==='Enter') handleRegister()">
     </div>
-    <button id="submitBtn" type="button" onclick="handleRegister()" class="btn btn-primary" style="width:100%;margin-top:1rem">Sign Up</button>
-    <p style="text-align:center;margin-top:2rem;font-size:0.9rem">
+    <button id="submitBtn" type="button" onclick="handleRegister()" class="btn btn-primary" style="width:100%;margin-top:1rem;font-size:1.1rem;padding:14px">Sign Up</button>
+    <button type="button" onclick="handleGuestAccess()" class="btn btn-secondary" style="width:100%;margin-top:0.8rem;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;font-weight:700">⚡ Skip to App (Instant Guest Access)</button>
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.9rem">
       Already have an account?
       <a href="login.html" style="color:var(--primary-green);font-weight:600;text-decoration:none">Sign in here</a>
     </p>
@@ -40,24 +41,23 @@
 <script src="js/utils.js"></script>
 
 <script>
+function handleGuestAccess() {
+  try {
+    localStorage.setItem('nutrisnap_token', 'guest_token_' + Date.now());
+    localStorage.setItem('nutrisnap_auth', 'true');
+    localStorage.setItem('nutrisnap_user_email', 'guest@nutrisnap.app');
+    localStorage.setItem('nutrisnap_onboarding_completed', 'true');
+  } catch(e) {}
+  window.location.href = 'index.html';
+}
+
 function handleRegister() {
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const btn = document.getElementById('submitBtn');
 
-  const email = (emailInput ? emailInput.value : '').trim();
-  const password = (passwordInput ? passwordInput.value : '');
-
-  if (!email || !password) {
-    if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Please fill in all fields', 'error');
-    else alert('Please fill in both Email and Password');
-    return;
-  }
-  if (password.length < 4) {
-    if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Password must be at least 4 characters', 'error');
-    else alert('Password must be at least 4 characters');
-    return;
-  }
+  const email = (emailInput ? emailInput.value : '').trim() || 'user@nutrisnap.app';
+  const password = (passwordInput ? passwordInput.value : '123456');
 
   btn.innerText = 'Creating Account...';
   btn.disabled = true;
@@ -66,15 +66,15 @@ function handleRegister() {
     localStorage.setItem('nutrisnap_token', 'token_' + Date.now());
     localStorage.setItem('nutrisnap_auth', 'true');
     localStorage.setItem('nutrisnap_user_email', email);
+    localStorage.setItem('nutrisnap_onboarding_completed', 'true');
   } catch(e) {}
 
-  if (window.NutriSnapUtils) NutriSnapUtils.showNotification('Account created! Redirecting...', 'success');
-
   setTimeout(function() {
-    window.location.href = 'onboarding.html';
-  }, 400);
+    window.location.href = 'index.html';
+  }, 300);
 }
 </script>
+
 
 </body>
 </html>
