@@ -145,6 +145,12 @@ function handleFileUpload(file, imageSrc) {
   analyzeFood();
 }
 
+function safeSaveToLocalStorage(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch(e) {}
+}
+
 async function analyzeFood(){
   if(!selectedFile) return;
 
@@ -154,18 +160,21 @@ async function analyzeFood(){
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    const fetchPromise = NutriSnapUtils.apiFetch('/food/analyze', {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 1000) : null;
+
+    const apiUrl = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api/food/analyze';
+    const res = await fetch(apiUrl, {
       method: "POST",
-      body: formData
+      body: formData,
+      signal: controller ? controller.signal : undefined
     });
-
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("API timeout")), 1000)
-    );
-
-    data = await Promise.race([fetchPromise, timeoutPromise]);
+    if (timeoutId) clearTimeout(timeoutId);
+    if (res && res.ok) {
+      data = await res.json();
+    }
   } catch (err) {
-    console.warn("Backend API unavailable or timed out, using instant local AI engine:", err.message);
+    console.warn("Backend API fetch skipped/failed, using instant local AI engine:", err.message);
   }
 
   if (!data || !data.foodName || data.foodName === 'Unknown Food') {
@@ -197,9 +206,10 @@ async function analyzeFood(){
     nutrition: data.nutrition
   };
 
-  NutriSnapUtils.saveToLocalStorage("currentAnalysis", analysisData);
+  safeSaveToLocalStorage("currentAnalysis", analysisData);
   displayNutritionalReview(analysisData, selectedImageSrc);
 }
+
 
 
 function displayNutritionalReview(analysisData, imageSrc) {
