@@ -207,27 +207,34 @@ function analyzeImagePixels(imageSrc, fileName) {
         const brownPct = brownPixels / total;
         const whitePct = whitePixels / total;
 
+        // Non-food document / screenshot / white-page detection
+        if (whitePct > 0.55 && greenPct < 0.05 && redPct < 0.05 && yellowPct < 0.05) {
+          resolve({ foodName: 'Non-Food Document / Screenshot', confidence: 95, isFood: false, nutrition: null });
+          return;
+        }
+
         if (greenPct > 0.15) {
           resolve({ foodName: 'Fresh Garden Salad', confidence: 91, isFood: true, nutrition: { calories: 140, protein: 5, carbs: 12, fat: 6, fiber: 5, sugar: 4, sodium: 190 } });
         } else if (redPct > 0.14) {
           resolve({ foodName: 'Margherita Pizza', confidence: 89, isFood: true, nutrition: { calories: 285, protein: 12, carbs: 34, fat: 11, fiber: 3, sugar: 4, sodium: 540 } });
         } else if (yellowPct > 0.16) {
           resolve({ foodName: 'Steamed Yellow Dhokla', confidence: 90, isFood: true, nutrition: { calories: 165, protein: 7, carbs: 28, fat: 3, fiber: 4, sugar: 3, sodium: 310 } });
-        } else if (whitePct > 0.22) {
-          resolve({ foodName: 'Steamed Idli & Rice Dish', confidence: 92, isFood: true, nutrition: { calories: 135, protein: 5, carbs: 26, fat: 1, fiber: 3, sugar: 2, sodium: 220 } });
         } else if (brownPct > 0.18) {
           resolve({ foodName: 'Gourmet Veggie Burger', confidence: 88, isFood: true, nutrition: { calories: 360, protein: 15, carbs: 44, fat: 14, fiber: 6, sugar: 6, sodium: 610 } });
+        } else if (whitePct > 0.22 && whitePct <= 0.55) {
+          resolve({ foodName: 'Steamed Idli & Rice Dish', confidence: 92, isFood: true, nutrition: { calories: 135, protein: 5, carbs: 26, fat: 1, fiber: 3, sugar: 2, sodium: 220 } });
         } else {
           resolve({ foodName: 'Nutritional Meal Bowl', confidence: 86, isFood: true, nutrition: { calories: 260, protein: 11, carbs: 36, fat: 8, fiber: 5, sugar: 5, sodium: 290 } });
         }
       } catch(e) {
-        resolve({ foodName: 'Healthy Meal Bowl', confidence: 80, isFood: true, nutrition: { calories: 250, protein: 12, carbs: 35, fat: 8, fiber: 5, sugar: 6, sodium: 300 } });
+        resolve({ foodName: 'Non-Food Item', confidence: 80, isFood: false, nutrition: null });
       }
     };
-    img.onerror = () => resolve({ foodName: 'Healthy Meal Bowl', confidence: 80, isFood: true, nutrition: { calories: 250, protein: 12, carbs: 35, fat: 8, fiber: 5, sugar: 6, sodium: 300 } });
+    img.onerror = () => resolve({ foodName: 'Non-Food Item', confidence: 80, isFood: false, nutrition: null });
     img.src = imageSrc;
   });
 }
+
 
 
 async function analyzeFood(){
