@@ -154,12 +154,18 @@ async function analyzeFood(){
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    data = await NutriSnapUtils.apiFetch('/food/analyze', {
+    const fetchPromise = NutriSnapUtils.apiFetch('/food/analyze', {
       method: "POST",
       body: formData
     });
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("API timeout")), 2500)
+    );
+
+    data = await Promise.race([fetchPromise, timeoutPromise]);
   } catch (err) {
-    console.warn("Backend API unavailable or slow, using instant local AI engine:", err.message);
+    console.warn("Backend API unavailable or timed out, using instant local AI engine:", err.message);
   }
 
   if (!data || !data.foodName || data.foodName === 'Unknown Food') {
@@ -194,6 +200,7 @@ async function analyzeFood(){
   NutriSnapUtils.saveToLocalStorage("currentAnalysis", analysisData);
   displayNutritionalReview(analysisData, selectedImageSrc);
 }
+
 
 function displayNutritionalReview(analysisData, imageSrc) {
   const analysisSection = document.getElementById("analysisSection");
