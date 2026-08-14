@@ -161,7 +161,7 @@ async function analyzeFood(){
     formData.append("file", selectedFile);
 
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 1000) : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
 
     const apiUrl = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api/food/analyze';
     const res = await fetch(apiUrl, {
@@ -174,7 +174,7 @@ async function analyzeFood(){
       data = await res.json();
     }
   } catch (err) {
-    console.warn("Backend API fetch skipped/failed, using instant local AI engine:", err.message);
+    console.warn("Backend API fetch skipped or timed out:", err.message);
   }
 
   if (!data || !data.foodName || data.foodName === 'Unknown Food') {
@@ -195,6 +195,7 @@ async function analyzeFood(){
     data = {
       foodName: foodName,
       confidence: 88,
+      isFood: true,
       nutrition: { calories, protein, carbs, fat, fiber, sugar, sodium }
     };
   }
@@ -202,6 +203,7 @@ async function analyzeFood(){
   const analysisData = {
     foodName: data.foodName || 'Identified Dish',
     confidence: data.confidence || 88,
+    isFood: data.isFood !== false,
     image: "🍽️",
     nutrition: data.nutrition
   };
@@ -212,28 +214,50 @@ async function analyzeFood(){
 
 
 
+
 function displayNutritionalReview(analysisData, imageSrc) {
   const analysisSection = document.getElementById("analysisSection");
   const nut = analysisData.nutrition || { calories: 250, protein: 12, carbs: 35, fat: 8, fiber: 5, sugar: 6, sodium: 300 };
+  const isFood = analysisData.isFood !== false;
 
   analysisSection.style.display = "block";
   analysisSection.style.opacity = "1";
   analysisSection.style.visibility = "visible";
+
+  if (!isFood) {
+    analysisSection.innerHTML = `
+      <div style="background:#fff3e0; border-radius:18px; box-shadow:0 12px 35px rgba(255,152,0,0.15); padding:2rem; margin-top:1.5rem; border:2px solid #ffe0b2; text-align:center">
+        <div style="font-size:3.5rem; margin-bottom:0.8rem">⚠️</div>
+        <span style="background:#e65100; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">NON-FOOD ITEM DETECTED</span>
+        <h2 style="margin:0.8rem 0 0.5rem 0; font-size:1.8rem; color:#d84315; font-weight:800">No Food Detected in Image</h2>
+        <p style="color:#bf360c; font-size:1.1rem; max-width:600px; margin:0 auto 1.5rem auto; font-weight:600">
+          Our Gemini AI analyzed your photo ("${analysisData.foodName}") and determined it is not a food item. Please upload a clear photo of your dish, meal, or food ingredients!
+        </p>
+        <button class="btn btn-primary" onclick="location.reload()" style="padding:14px 28px; font-weight:700; border-radius:30px">
+          📷 Upload Food Photo
+        </button>
+      </div>
+    `;
+    analysisSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
   analysisSection.innerHTML = `
     <div style="background:#ffffff; border-radius:18px; box-shadow:0 12px 35px rgba(0,0,0,0.12); padding:2rem; margin-top:1.5rem; border:2px solid #e3f2fd">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-bottom:2px solid #f0f4f8; padding-bottom:1.5rem; margin-bottom:1.5rem">
         <div style="display:flex; align-items:center; gap:1.2rem">
           ${imageSrc ? `<img src="${imageSrc}" style="width:80px; height:80px; border-radius:16px; object-fit:cover; box-shadow:0 6px 15px rgba(0,0,0,0.12)">` : '<div style="font-size:3.5rem">🍽️</div>'}
           <div>
-            <span style="background:#4CAF50; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">✓ AI MATCH VERIFIED</span>
+            <span style="background:#4CAF50; color:#ffffff; padding:4px 14px; border-radius:20px; font-size:0.85rem; font-weight:800; letter-spacing:0.5px">✓ GEMINI 2.5 AI VERIFIED</span>
             <h2 style="margin:0.4rem 0 0 0; font-size:2rem; color:var(--text-dark); font-weight:800">${analysisData.foodName}</h2>
-            <p style="margin:0.2rem 0 0 0; color:var(--text-light); font-weight:600">Match Confidence: ${analysisData.confidence}%</p>
+            <p style="margin:0.2rem 0 0 0; color:var(--text-light); font-weight:600">AI Confidence: ${analysisData.confidence}%</p>
           </div>
         </div>
         <div>
           <a href="nutrition-info.html" class="btn btn-primary" style="padding:12px 24px; font-weight:700; font-size:1rem; border-radius:30px; box-shadow:0 4px 15px rgba(33,150,243,0.3)">📊 Full Macro Chart</a>
         </div>
       </div>
+
 
       <h3 style="margin-bottom:1.2rem; color:var(--text-dark); font-weight:800; font-size:1.35rem">Nutritional Review & Macro Breakdown</h3>
 

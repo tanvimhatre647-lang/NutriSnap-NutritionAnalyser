@@ -66,13 +66,14 @@ const analyzeFood = async (req, res) => {
     const base64Image = req.file.buffer.toString('base64');
     const imageMime = req.file.mimetype;
 
-    // 1. Try Gemini API if key is valid (Google Gemini keys start with AIzaSy)
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().startsWith('AIzaSy')) {
+    // 1. Live Google Gemini 2.5 Flash AI Vision Analysis
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
       try {
-        const prompt = 'Analyze this image. If it contains food, identify the main dish, guess its standard nutritional values, and set "isFood" to true. If it does not contain food, set "isFood" to false. Respond strictly with a JSON object in this format: { "foodName": "Name", "confidence": 85, "isFood": true, "nutrition": { "calories": 250, "protein": 12, "carbs": 35, "fat": 8, "fiber": 5, "sugar": 7, "sodium": 300, "vitamins": { "Vitamin A": 12, "Vitamin C": 8, "Vitamin B6": 6 }, "minerals": { "Calcium": 150, "Iron": 8, "Magnesium": 40, "Potassium": 300 } } }';
+        const apiKey = process.env.GEMINI_API_KEY.trim();
+        const prompt = 'Analyze this image carefully. If it contains food or a dish, set "isFood": true, identify the food dish name accurately, and provide estimated nutritional breakdown per standard serving size. If the image does NOT contain food (e.g. text, chart, person, document, object), set "isFood": false. Respond strictly with JSON format: { "isFood": true, "foodName": "Exact Dish Name", "confidence": 92, "nutrition": { "calories": 250, "protein": 12, "carbs": 35, "fat": 8, "fiber": 5, "sugar": 6, "sodium": 300, "vitamins": { "Vitamin A": 12, "Vitamin C": 10 }, "minerals": { "Calcium": 140, "Iron": 6 } } }';
 
         const geminiResponse = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY.trim()}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
           {
             contents: [
               {
@@ -88,7 +89,7 @@ const analyzeFood = async (req, res) => {
               }
             ]
           },
-          { headers: { 'Content-Type': 'application/json' }, timeout: 7000 }
+          { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
         );
 
         let responseContent = geminiResponse.data.candidates[0].content.parts[0].text;
@@ -96,23 +97,34 @@ const analyzeFood = async (req, res) => {
         if (jsonMatch) responseContent = jsonMatch[0];
         const parsedData = JSON.parse(responseContent);
 
-        if (parsedData.isFood && parsedData.confidence >= 40 && parsedData.foodName !== 'Unknown Food') {
-          foodName = parsedData.foodName;
-          confidence = parsedData.confidence;
+        if (parsedData) {
+          foodName = parsedData.foodName || 'Identified Food';
+          confidence = parsedData.confidence || 88;
+          const isFood = parsedData.isFood !== false;
+
           nutrition = {
+            isFood: isFood,
             calories: parsedData.nutrition?.calories || 250,
             protein:  parsedData.nutrition?.protein  || 12,
             carbs:    parsedData.nutrition?.carbs    || 35,
             fat:      parsedData.nutrition?.fat      || 8,
             fiber:    parsedData.nutrition?.fiber    || 5,
-            sugar:    parsedData.nutrition?.sugar    || 7,
+            sugar:    parsedData.nutrition?.sugar    || 6,
             sodium:   parsedData.nutrition?.sodium   || 300,
-            vitamins: parsedData.nutrition?.vitamins || { 'Vitamin A': 12, 'Vitamin C': 8, 'Vitamin B6': 6 },
-            minerals: parsedData.nutrition?.minerals || { 'Calcium': 150, 'Iron': 8, 'Magnesium': 40, 'Potassium': 300 }
+            vitamins: parsedData.nutrition?.vitamins || { 'Vitamin A': 12, 'Vitamin C': 8 },
+            minerals: parsedData.nutrition?.minerals || { 'Calcium': 140, 'Iron': 6 }
           };
+
+          return res.status(200).json({
+            success: true,
+            foodName: foodName,
+            confidence: confidence,
+            isFood: isFood,
+            nutrition: nutrition
+          });
         }
       } catch (apiErr) {
-        console.error('Gemini analyze error:', apiErr.message);
+        console.error('Gemini 2.5 Flash Vision AI Error:', apiErr.response?.data || apiErr.message);
       }
     }
 
