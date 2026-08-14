@@ -1,15 +1,9 @@
 // NutriSnap Utilities
 
-// Auto-detect backend URL:
-// - In production: set window.NUTRISNAP_API_URL before this script loads
-// - Falls back to localhost for local development
 const API_BASE_URL = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api';
-
-// API Base URL (defaults to localhost:5000 for local dev if window.NUTRISNAP_API_URL is not set)
-const API_BASE_URL = (window.NUTRISNAP_API_URL || 'http://localhost:5000') + '/api';
-
 
 // ── API fetch helper ──────────────────────────────────────────────────────────
+
 async function apiFetch(endpoint, options) {
   options = options || {};
 
