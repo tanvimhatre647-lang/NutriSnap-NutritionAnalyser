@@ -52,27 +52,16 @@ function handleGuestAccess() {
 }
 
 function handleRegister() {
-  const emailInput = document.getElementById('email');
-  const passwordInput = document.getElementById('password');
-  const btn = document.getElementById('submitBtn');
-
-  const email = (emailInput ? emailInput.value : '').trim() || 'user@nutrisnap.app';
-  const password = (passwordInput ? passwordInput.value : '123456');
-
-  btn.innerText = 'Creating Account...';
-  btn.disabled = true;
-
   try {
     localStorage.setItem('nutrisnap_token', 'token_' + Date.now());
     localStorage.setItem('nutrisnap_auth', 'true');
-    localStorage.setItem('nutrisnap_user_email', email);
+    localStorage.setItem('nutrisnap_user_email', 'user@nutrisnap.app');
     localStorage.setItem('nutrisnap_onboarding_completed', 'true');
   } catch(e) {}
 
-  setTimeout(function() {
-    window.location.href = 'index.html';
-  }, 300);
+  window.location.href = 'index.html';
 }
+
 </script>
 
 

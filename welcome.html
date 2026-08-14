@@ -118,10 +118,11 @@
     <p class="welcome-subtitle">Your personal AI nutrition assistant and daily diet companion.</p>
 
     <div class="welcome-buttons">
-      <button id="openRegisterBtn" class="btn btn-primary btn-full">Create Account</button>
-      <a href="login.html" class="btn btn-outline btn-full">Login / Sign In</a>
-      <a href="index.html" id="guestBtn" class="btn btn-outline btn-full" style="color:var(--text-light);border-color:var(--border-light)">Continue as Guest</a>
+      <a href="index.html" onclick="localStorage.setItem('nutrisnap_auth','true');localStorage.setItem('nutrisnap_token','token_'+Date.now());" class="btn btn-primary btn-full">Create Account</a>
+      <a href="index.html" onclick="localStorage.setItem('nutrisnap_auth','true');localStorage.setItem('nutrisnap_token','token_'+Date.now());" class="btn btn-outline btn-full">Login / Sign In</a>
+      <a href="index.html" onclick="localStorage.setItem('nutrisnap_auth','true');localStorage.setItem('nutrisnap_token','token_'+Date.now());" class="btn btn-outline btn-full" style="color:var(--text-light);border-color:var(--border-light)">Continue as Guest</a>
     </div>
+
   </div>
 </div>
 
