@@ -160,7 +160,7 @@ async function analyzeFood(){
     });
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("API timeout")), 2500)
+      setTimeout(() => reject(new Error("API timeout")), 1000)
     );
 
     data = await Promise.race([fetchPromise, timeoutPromise]);
@@ -228,19 +228,19 @@ function displayNutritionalReview(analysisData, imageSrc) {
       <h3 style="margin-bottom:1.2rem; color:var(--text-dark); font-weight:800; font-size:1.35rem">Nutritional Review & Macro Breakdown</h3>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:1.2rem; margin-bottom:1.8rem">
-        <div style="background:#fff3e0; padding:1.4rem; border-radius:16px; text-align:center; border:1.5solid #ffe0b2; box-shadow:0 3px 10px rgba(255,152,0,0.12)">
+        <div style="background:#fff3e0; padding:1.4rem; border-radius:16px; text-align:center; border:1.5px solid #ffe0b2; box-shadow:0 3px 10px rgba(255,152,0,0.12)">
           <div style="font-size:2rem; font-weight:900; color:#e65100">${nut.calories}</div>
           <div style="font-size:0.85rem; font-weight:700; color:#f57c00; margin-top:0.3rem">Calories (kcal)</div>
         </div>
-        <div style="background:#e3f2fd; padding:1.4rem; border-radius:16px; text-align:center; border:1.5solid #bbdefb; box-shadow:0 3px 10px rgba(33,150,243,0.12)">
+        <div style="background:#e3f2fd; padding:1.4rem; border-radius:16px; text-align:center; border:1.5px solid #bbdefb; box-shadow:0 3px 10px rgba(33,150,243,0.12)">
           <div style="font-size:2rem; font-weight:900; color:#0d47a1">${nut.protein}g</div>
           <div style="font-size:0.85rem; font-weight:700; color:#1976d2; margin-top:0.3rem">Protein</div>
         </div>
-        <div style="background:#ffebee; padding:1.4rem; border-radius:16px; text-align:center; border:1.5solid #ffcdd2; box-shadow:0 3px 10px rgba(244,67,54,0.12)">
+        <div style="background:#ffebee; padding:1.4rem; border-radius:16px; text-align:center; border:1.5px solid #ffcdd2; box-shadow:0 3px 10px rgba(244,67,54,0.12)">
           <div style="font-size:2rem; font-weight:900; color:#b71c1c">${nut.carbs}g</div>
           <div style="font-size:0.85rem; font-weight:700; color:#d32f2f; margin-top:0.3rem">Carbs</div>
         </div>
-        <div style="background:#e8f5e9; padding:1.4rem; border-radius:16px; text-align:center; border:1.5solid #c8e6c9; box-shadow:0 3px 10px rgba(76,175,80,0.12)">
+        <div style="background:#e8f5e9; padding:1.4rem; border-radius:16px; text-align:center; border:1.5px solid #c8e6c9; box-shadow:0 3px 10px rgba(76,175,80,0.12)">
           <div style="font-size:2rem; font-weight:900; color:#1b5e20">${nut.fat}g</div>
           <div style="font-size:0.85rem; font-weight:700; color:#388e3c; margin-top:0.3rem">Fat</div>
         </div>
